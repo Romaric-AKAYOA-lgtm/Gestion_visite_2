@@ -1,0 +1,340 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titre %}{% endblock %}</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <style>
+    body {
+      background-image: url("{% static 'image/boat-5889919_1280.png' %}");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    :root {
+      --marine-blue: #1a1f36;
+      --light-gray: #f5f6fa;
+      --text-light: #f1f2f6;
+      --accent: #3d5afe;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 250px;
+      background-color: var(--marine-blue);
+      color: var(--text-light);
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 0.75rem;
+      z-index: 1000;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .sidebar img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    .sidebar h6 {
+      font-weight: 600;
+      color: #ced6e0;
+    }
+
+    .sidebar .nav-link {
+      color: var(--text-light);
+      font-weight: 500;
+      border-radius: 6px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .sidebar .nav-link:hover {
+      background-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .main-content-wrapper {
+      margin-left: 250px;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      transition: margin-left 0.3s ease-in-out;
+    }
+
+    .main-header {
+      position: sticky;
+      top: 0;
+      z-index: 1001;
+      background-color: var(--marine-blue);
+      width: 100%;
+      padding: 0.75rem 1rem;
+      color: var(--text-light);
+    }
+
+    .main-header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .main-content {
+      overflow-y: auto;
+      padding: 1.25rem;
+      flex-grow: 1;
+      color: #2f3542;
+    }
+
+    footer {
+      background-color: var(--marine-blue);
+      color: var(--text-light);
+      border-top: 1px solid #2f3542;
+      padding: 0.75rem 1rem;
+    }
+
+    .user-info {
+      margin-top: auto;
+    }
+
+    .card {
+      border: none;
+      border-radius: 0.5rem;
+    }
+
+    .card-body {
+      padding: 0.75rem 1rem;
+    }
+
+    small.text-muted {
+      font-size: 0.85rem;
+      color: #dcdde1 !important;
+    }
+
+    .nav .fa {
+      margin-right: 8px;
+    }
+
+    .nav-link.active {
+      background-color: var(--accent) !important;
+      color: #fff !important;
+    }
+
+    .sidebar-toggle {
+      display: none;
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-size: 1.5rem;
+      z-index: 1100;
+    }
+
+    @media (max-width: 991px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.show {
+        transform: translateX(0);
+      }
+
+      .sidebar-toggle {
+        display: block;
+      }
+
+      .main-content-wrapper {
+        margin-left: 0;
+      }
+
+      .main-content-wrapper.sidebar-visible {
+        margin-left: 250px;
+      }
+    }
+
+    .user-info p {
+      color: black;
+    }
+  </style>
+</head>
+
+<body>
+
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <div class="sidebar" id="sidebar">
+    <div class="d-flex flex-column align-items-center mb-1 mt-2">
+      <img src="{{ administration.logo.url }}" alt="Logo" class="rounded-circle mb-2">
+      <span class="h5 text-light text-center">{{ administration.nom }}</span>
+    </div>
+
+    <h6 class="mb-3 text-center">Menu</h6>
+    <div class="vh-100 overflow-auto mb-4">
+      <ul class="nav flex-column w-100 px-2">
+        <!-- Lien Accueil -->
+        <li class="nav-item">
+          <a href="{% url 'home' %}" class="nav-link">
+            <i class="fas fa-house-user"></i> Accueil
+          </a>
+        </li>
+    
+        <!-- Lien Visiteurs -->
+        <li class="nav-item">
+          <a href="{% url 'visiteur:visiteur_list' %}" class="nav-link">
+            <i class="fas fa-users"></i> Visiteurs
+          </a>
+        </li>
+    
+        <!-- Lien Visites -->
+        <li class="nav-item">
+          <a href="{% url 'visite:visite_list' %}" class="nav-link">
+            <i class="fas fa-calendar-day"></i> Visites
+          </a>
+        </li>
+    
+        <!-- Lien Programmes Visites -->
+        <li class="nav-item">
+          <a href="{% url 'programme_visite:programme_visite_list' %}" class="nav-link">
+            <i class="fas fa-calendar-check"></i> Programmes visites
+          </a>
+        </li>
+    
+        <!-- Lien Statistiques -->
+        <li class="nav-item">
+          <a href="{% url 'statistique' %}" class="nav-link">
+            <i class="fas fa-chart-line"></i> Statistiques
+          </a>
+        </li>
+    
+        <!-- Lien Secrétaires -->
+        <li class="nav-item">
+          <a href="{% url 'secretaire:secretaire_list' %}" class="nav-link">
+            <i class="fas fa-user-tie"></i> Secrétaires
+          </a>
+        </li>
+    
+        <!-- Lien Directeurs -->
+        <li class="nav-item">
+          <a href="{% url 'directeur:directeur_list' %}" class="nav-link">
+            <i class="fas fa-chalkboard-teacher"></i> Directeurs
+          </a>
+        </li>
+    
+        <!-- Lien Créer un utilisateur (Administrateur) -->
+        <li class="nav-item">
+          <a href="{% url 'connection:register' %}" class="nav-link">
+            <i class="fas fa-user-plus"></i> Créer un utilisateur
+          </a>
+        </li>
+    
+        <!-- Lien Paramètres (Administrateur) -->
+        <li class="nav-item">
+          <a href="{% url 'administration:list' %}" class="nav-link">
+            <i class="fas fa-cogs"></i> Paramètres
+          </a>
+        </li>
+    
+        <!-- Lien Se Déconnecter -->
+        <li class="nav-item">
+          <a href="{% url 'connection:logout' %}" class="nav-link">
+            <i class="fas fa-sign-out-alt"></i> Se Déconnecter
+          </a>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="user-info w-100 px-2 mt-auto mt-3">
+      <div class="card">
+        <div class="card-body">
+          {% if username %}
+            <p class="mb-0"><strong>{{ username.user.tnm }} {{ username.user.tpm }}</strong></p>
+            <p class="text-muted mb-1">Statut : {{ username.user.ttvst }}</p>
+            <p class="text-muted mt-2"><small>Connecté(e)</small></p>
+          {% else %}
+            <p class="mb-0 text-light">Vous n'êtes pas connecté(e).</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content-wrapper" id="main-wrapper">
+    <header class="main-header shadow-sm">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          <div class="col-12 col-md-8 text-center mx-auto">
+            <h1 class="text-center">{{ administration.nom }}</h1>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      {% block contenue %}{% endblock %}
+    </div>
+
+    <footer class="text-center">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-md-2 text-start"></div>
+          <div class="col-md-10 d-flex align-items-center justify-content-center">
+            <small class="text-muted">&copy; 2025 Gestion Visites - Tous droits réservés.</small>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+  <script>
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const mainWrapper = document.getElementById('main-wrapper');
+      sidebar.classList.toggle('show');
+      mainWrapper.classList.toggle('sidebar-visible');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const currentPath = window.location.pathname;
+      const links = document.querySelectorAll('.nav-link');
+
+      links.forEach(link => {
+        const linkPath = new URL(link.href).pathname;
+        if (currentPath === linkPath || currentPath.startsWith(linkPath)) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

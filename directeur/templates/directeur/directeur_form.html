@@ -1,0 +1,108 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<div class="container mt-4">
+    <!-- Modal Modifier Visiteur -->
+    <div class="modal fade show" id="modalAdherent" tabindex="-1" aria-labelledby="modalAdherentLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalAdherentLabel">Créer un directeur</h5>
+                </div>
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <form action="{% url 'directeur:directeur_create' %}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                    
+                        <div class="mb-3">
+                            <label for="tnm" class="form-label">Nom</label>
+                            <input type="text" class="form-control input-focus-blue" id="tnm" name="tnm">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tpm" class="form-label">Prénom</label>
+                            <input type="text" class="form-control input-focus-blue" id="tpm" name="tpm" >
+                        </div> 
+                        
+                        <div class="mb-3">
+                            <label for="dns" class="form-label">Date de naissance</label>
+                            <input type="date" class="form-control input-focus-blue" id="dns" name="dns"  required>
+                        </div>
+		            	<div class="mb-3">
+                            <label for="tlns" class="form-label">Lieu de aissance</label>
+                            <input type="text" class="form-control input-focus-blue" id="tlns" name="tlns" >
+                        </div>
+                        <div class="mb-3">
+                            <label for="tsx" class="form-label">Sexe</label>
+                            <select class="form-select input-focus-blue" id="tsx" name="tsx" required>
+                                <option value="Masculin" {% if form.tsx.value == "Masculin" %}selected{% endif %}>Masculin</option>
+                                <option value="Feminin" {% if form.tsx.value == "Feminin" %}selected{% endif %}>Féminin</option>
+                            </select>
+                        </div>
+    
+                        <div class="mb-3">
+                            <label for="teml" class="form-label">Email</label> 
+                            <input type="email" class="form-control input-focus-blue" id="teml" name="teml" >
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ttvst" class="form-label">Statut du directeur</label>
+                            <input type="text" class="form-control input-focus-blue" id="ttvst" name="ttvst" required>
+                        </div>
+                       
+                        <div class="mb-3">
+                            <label for="tphme" class="form-label">Numéro de téléphone</label>
+                            <input type="tel" class="form-control input-focus-blue" id="tphne" name="tphne">
+                        </div>
+
+                        <!-- Champ pour télécharger une image -->
+                        <div class="mb-3">
+                            <label for="img" class="form-label">Photo</label>
+                            <input type="file" class="form-control input-focus-blue" id="img" name="img" accept="image/*">
+                        </div>
+                        
+                        <div class="text-end">
+                             <a href="{% url 'directeur:directeur_list' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 btn-sm">Modifier</button>
+                       </div>
+    
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Script pour verrouiller le modal ouvert jusqu'à une action -->
+<script>
+    window.onload = function() {
+        var myModal = new bootstrap.Modal(document.getElementById("modalAdherent"), {
+            keyboard: false,
+            backdrop: 'static'  // Empêche la fermeture en cliquant à l'extérieur
+        });
+        myModal.show();
+    }
+    
+    function fermerModal() {
+        var modal = document.getElementById('modalAdherent');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        var backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+</script>
+
+{% endblock %}

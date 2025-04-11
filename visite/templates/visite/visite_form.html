@@ -1,0 +1,102 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="modal fade" id="ajouterVisiteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ajouterVisiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ajouterVisiteModalLabel">Ajouter une Visite</h5>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'visite:visite_create' %}" method="POST">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="visiteur" class="form-label">Sélectionner un visiteur</label>
+                        <select class="form-select" name="idvstr" required>
+                            <option value="">-- Sélectionner un visiteur --</option>
+                            {% for visiteur in visiteur %}
+                                <option value="{{ visiteur.id }}">{{ visiteur.tnm }} {{ visiteur.tpm }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ddvst" class="form-label">Date de Visite</label>
+                        <input type="date" class="form-control" name="ddvst" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="hvst" class="form-label">Heure de Visite</label>
+                        <input type="time" class="form-control" name="hvst">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tobjt" class="form-label">Objet</label>
+                        <textarea class="form-control" name="tobjt" required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ttvst" class="form-label">Description</label>
+                        <textarea class="form-control" name="ttvst" rows="3" placeholder="ex : externe, interne" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="iddirecteur" class="form-label">Sélectionner un directeur</label>
+                        <select class="form-select" name="iddirecteur" required>
+                            <option value="">-- Sélectionner un directeur --</option>
+                            {% for secretaire in directeurs %}
+                                <option value="{{ secretaire.directeur.id }}">
+                                    {{ secretaire.directeur.tnm }} {{ secretaire.directeur.tpm }} - {{ secretaire.directeur.ttvst }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="tsttvst" class="form-label">Statut</label>
+                        <select class="form-select" name="tsttvst" required>
+                            <option value="confirmé">Confirmé</option>
+                            <option value="annulé">Annulé</option>
+                        </select>
+                    </div>
+                    <div class="text-end">
+                        <a href="{% url 'visite:visite_list' %}" class="btn btn-secondary" id="fermerModal">Retour</a>
+                        <button type="submit" class="btn btn-primary">Ajouter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var myModalEl = document.getElementById('ajouterVisiteModal');
+        var myModal = new bootstrap.Modal(myModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        myModal.show();
+
+        myModalEl.addEventListener('hidden.bs.modal', function (event) {
+            event.preventDefault();
+            myModal.show();
+        });
+
+        document.getElementById("fermerModal").addEventListener("click", function(event) {
+            myModal.hide();
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

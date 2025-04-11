@@ -1,0 +1,71 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+    <!-- La modale qui s'ouvre automatiquement au chargement de la page -->
+    <div class="modal fade show" id="modalAdherent" tabindex="-1" aria-labelledby="modalAdherentLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="visiteurModalLabel">Détails du Visiteur</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Nom</th>
+                            <td>{{ visiteur.tnm }}</td>
+                        </tr>
+                        <tr>
+                            <th>Prénom</th>
+                            <td>{{ visiteur.tpm }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date de naissance</th>
+                            <td>{{ visiteur.dns }}</td>
+                        </tr>
+                        <tr>
+                            <th>Adresse</th>
+                            <td>{{ visiteur.tads }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>
+                                <a href="mailto:{{ visiteur.teml }}?subject=Votre%20sujet&body=Bonjour%20{{ visiteur.tnm }},%0A%0A" class="text-decoration-none">
+                                    <i class="bi bi-envelope"></i> {{ visiteur.teml }}
+                                </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Numéro de téléphone</th>
+                            <td>
+                                <a href="https://web.whatsapp.com/send?phone={{ visiteur.tphne }}" target="_blank">
+                                    {{ visiteur.tphne }}
+                                </a>
+                            </td>
+                            <tr>
+                                <th>Type e visiteur</th>
+                                <td>{{ visiteur.ttvst }}</td>
+                            </tr>
+                            <tr>
+                                <th>Sttut</th>
+                                <td>{{ visiteur.tstt }}</td>
+                            </tr>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <!-- Le bouton pour fermer la modale -->
+                    <a href="{% url 'visiteur:visiteur_list' %}" class="btn btn-secondary btn-sm">Retour à la liste</a>
+                    <a href="{% url 'visiteur:visiteur_update' visiteur.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil-square"></i> Modifier
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fond noir pour modal (backdrop) -->
+    <div class="modal-backdrop fade show"></div>
+
+{% endblock %}

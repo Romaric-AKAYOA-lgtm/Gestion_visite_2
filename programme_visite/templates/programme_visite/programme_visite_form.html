@@ -1,0 +1,150 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="modal fade" id="ajouterProgrammeVisiteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="ajouterProgrammeVisiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="ajouterProgrammeVisiteModalLabel">Ajouter un Programme de Visite</h5>
+            </div>
+            <div class="modal-body">
+                <form action="{% url 'programme_visite:programme_visite_create' %}" method="POST">
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Sélectionner une Visite -->
+                    <div class="mb-3">
+                        <label for="idvst" class="form-label">Sélectionner une Visite</label>
+                        <select class="form-select" name="idvst" id="idvst" required>
+                            <option value="">-- Sélectionner une Visite --</option>
+                            {% for visite in visites %}
+                                <option value="{{ visite.id }}" data-date="{{ visite.ddvst|date:'Y-m-d' }}" data-heure="{{ visite.hvst|time:'H:i' }}" data-statut="{{ visite.tsttvst }}">
+                                    Visite de : {{ visite.idvstr.tnm }} {{ visite.idvstr.tpm }} - {{ visite.tobjt }} avec {{ visite.iddirecteur.tnm }} {{ visite.iddirecteur.tpm }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Date Programmée -->
+                    <div class="mb-3">
+                        <label for="ddpvst" class="form-label">Date Programmée de Visite</label>
+                        <input type="date" class="form-control" name="ddpvst" id="ddpvst" required>
+                    </div>
+
+                    <!-- Heure Début -->
+                    <div class="mb-3">
+                        <label for="hdbt" class="form-label">Heure de Début</label>
+                        <input type="time" class="form-control" name="hdbt" id="hdbt" required>
+                    </div>
+
+                    <!-- Heure Fin -->
+                    <div class="mb-3">
+                        <label for="hhf" class="form-label">Heure de Fin</label>
+                        <input type="time" class="form-control" name="hhf" id="hhf">
+                    </div>
+
+                    <!-- Statut Programme -->
+                    <div class="mb-3">
+                        <label for="tsttpvst" class="form-label">Statut du Programme</label>
+                        <select class="form-select" name="tsttpvst" id="statut" required>
+                            <option value="confirmé">Confirmé</option>
+                            <option value="annulé">Annulé</option>
+                        </select>
+                    </div>
+
+                    <!-- Motif -->
+                    <div class="mb-3">
+                        <label for="motif" class="form-label">Motif (en cas d'empêchement)</label>
+                        <textarea class="form-control" name="motif" id="motif" rows="3" placeholder="ex : problème technique" required disabled></textarea>
+                    </div>
+
+                    <!-- Sélectionner une Secrétaire -->
+                    <div class="mb-3">
+                        <label for="secretaire" class="form-label">Sélectionner une Secrétaire</label>
+                        <select class="form-select" name="secretaire" required>
+                            <option value="">-- Sélectionner une Secrétaire --</option>
+                            <option value="{{ secretaire_recente.id }}">
+                                {{ secretaire_recente.tnm }} {{ secretaire_recente.tpm }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'programme_visite:programme_visite_list' %}" class="btn btn-secondary" id="fermerModal">Retour</a>
+                        <button type="submit" class="btn btn-primary">Ajouter le Programme</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var statutSelect = document.getElementById("statut");
+        var motifTextarea = document.getElementById("motif");
+        var visiteSelect = document.getElementById("idvst");
+        var dateInput = document.getElementById("ddpvst");
+        var heureDebutInput = document.getElementById("hdbt");
+        var heureFinInput = document.getElementById("hhf");
+
+        // Initial check for "confirmé" or "annulé" status
+        toggleMotifField(statutSelect.value);
+
+        // Listen for changes to the statut select dropdown
+        statutSelect.addEventListener('change', function () {
+            toggleMotifField(statutSelect.value);
+        });
+
+        // Function to toggle the motif textarea based on statut
+        function toggleMotifField(statut) {
+            if (statut === 'annulé') {
+                motifTextarea.disabled = false; // Enable the motif textarea
+            } else {
+                motifTextarea.disabled = true;  // Disable the motif textarea
+            }
+        }
+
+        // Listen for changes in the selected visit
+        visiteSelect.addEventListener('change', function () {
+            var selectedOption = this.options[this.selectedIndex];
+            var date = selectedOption.getAttribute("data-date");
+            var heure = selectedOption.getAttribute("data-heure");
+            var statut = selectedOption.getAttribute("data-statut");
+
+            // Set the date, hour, and statut in the respective fields
+            dateInput.value = date;  // Set date in yyyy-mm-dd format
+            heureDebutInput.value = heure;
+            statutSelect.value = statut; // Set default statut value
+        });
+
+        // Modal behavior
+        var myModalEl = document.getElementById('ajouterProgrammeVisiteModal');
+        var myModal = new bootstrap.Modal(myModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        myModal.show();
+
+        myModalEl.addEventListener('hidden.bs.modal', function (event) {
+            event.preventDefault();
+            myModal.show();
+        });
+
+        document.getElementById("fermerModal").addEventListener("click", function(event) {
+            myModal.hide();
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

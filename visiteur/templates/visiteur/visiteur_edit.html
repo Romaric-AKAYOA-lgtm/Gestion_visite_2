@@ -1,0 +1,95 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="container-fluid mt-4">
+    <!-- Modal Modifier Visiteur -->
+    <div class="modal fade show" id="modalAdherent" tabindex="-1" aria-labelledby="modalAdherentLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="modalAdherentLabel">Modifier un visiteur</h5>
+                </div>
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}<br>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'visiteur:visiteur_update' form.instance.pk %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="tnm" class="form-label">Nom</label>
+                            <input type="text" class="form-control input-focus-blue" id="tnm" name="tnm" value="{{ form.tnm.value }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="tpm" class="form-label">Prénom</label>
+                            <input type="text" class="form-control input-focus-blue" id="tpm" name="tpm" value="{{ form.tpm.value }}" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="dns" class="form-label">Date de naissance</label>
+                            <input type="date" class="form-control input-focus-blue" id="dns" name="dns"
+                                   value="{{ form.dns.value|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tlns" class="form-label">Lieu de aissance</label>
+                            <input type="text" class="form-control input-focus-blue" id="tlns" name="tlns"value="{{ form.tlns.value }}" >
+                        </div>
+                                                 
+                        <div class="mb-3">
+                            <label for="tsx" class="form-label">Sexe</label>
+                            <select class="form-select input-focus-blue" id="tsx" name="tsx" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="Masculin" {% if form.tsx.value == 'Masculin' %}selected{% endif %}>Masculin</option>
+                                <option value="Feminin" {% if form.tsx.value == 'Feminin' %}selected{% endif %}>Feminin</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="teml" class="form-label">Email</label> 
+                            <input type="email" class="form-control input-focus-blue" id="teml" name="teml" value="{{ form.teml.value }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="ttvst" class="form-label">Statut directeur</label>
+                            <input type="text" class="form-control input-focus-blue" id="ttvst" name="ttvst" value="{{ form.ttvst.value }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="tphne" class="form-label">Numéro de téléphone</label>
+                            <input type="tel" class="form-control input-focus-blue" id="tphne" name="tphne" value="{{ form.tphne.value }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="img" class="form-label">Photo</label>
+                            <input type="file" class="form-control input-focus-blue" id="img" name="img" accept="image/*">
+                        </div>
+                        
+                        <div class="text-end">
+                            <a href="{% url 'visiteur:visiteur_list' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
+                            <button type="submit" class="btn btn-warning px-4 py-2 btn-sm">Mettre à jour</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.onload = function () {
+        var myModal = new bootstrap.Modal(document.getElementById("modalAdherent"), {
+            keyboard: false,
+            backdrop: 'static'  // Empêche la fermeture en cliquant à l'extérieur
+        });
+        myModal.show();
+    }
+</script>
+{% endblock %}

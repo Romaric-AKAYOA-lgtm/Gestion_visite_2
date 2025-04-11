@@ -1,0 +1,86 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<!-- Modal structure for Editing Administration -->
+<div class="modal fade show" id="administrationModal" tabindex="-1" aria-labelledby="administrationModalLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title text-white" id="administrationModalLabel">
+                    {% if administration %}Modifier{% else %}Créer{% endif %} l'Administration
+                </h5>
+            </div>
+            <div class="modal-body">
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field in form %}
+                        {% if field.errors %}
+                            <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <form method="POST" enctype="multipart/form-data" action="{% url 'administration:modify' form.instance.pk %}" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="nom" class="form-label">Nom de l'Administration</label>
+                        <input type="text" class="form-control" id="nom" name="nom" value="{{ form.nom.value }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="localisation" class="form-label">Localisation</label>
+                        <input type="text" class="form-control" id="localisation" name="localisation" value="{{ form.localisation.value }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="devise" class="form-label">Devise</label>
+                        <input type="text" class="form-control" id="devise" name="devise" value="{{ form.devise.value }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pays" class="form-label">Pays</label>
+                        <input type="text" class="form-control" id="pays" name="pays" value="{{ form.pays.value }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="devise_pays" class="form-label">Devise du Pays</label>
+                        <input type="text" class="form-control" id="devise_pays" name="devise_pays" value="{{ form.devise_pays.value }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="logo" class="form-label">Logo</label>
+                        <input type="file" class="form-control" id="logo" name="logo">
+                    </div>
+                    <div class="mb-3">
+                        <label for="drapeau" class="form-label">Drapeau</label>
+                        <input type="file" class="form-control" id="drapeau" name="drapeau">
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'administration:list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Retour
+                        </a>
+                            <button type="submit" class="btn btn-warning px-4 py-2 btn-sm">
+                            {% if administration %}
+                                Modifier
+                            {% else %}
+                                Créer
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script to trigger modal automatically -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show the modal automatically on page load
+        var myModal = new bootstrap.Modal(document.getElementById('administrationModal'), {
+            keyboard: false,
+            backdrop: 'static' // Disables closing the modal by clicking outside
+        });
+        myModal.show();
+    });
+</script>
+
+{% endblock %}

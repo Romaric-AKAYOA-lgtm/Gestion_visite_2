@@ -1,0 +1,102 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<div class="container mt-4">
+    <!-- Modal Modifier avec les détails de l'administration -->
+    <div class="modal fade show" id="modifierModal" tabindex="-1" aria-labelledby="modifierModalLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modifierModalLabel">
+                        <i class="bi bi-building"></i> Détails de l'Administration
+                    </h5>
+               </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Infos générales sous forme de tableau -->
+                        <div class="col-md-6">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">
+                                        <i class="bi bi-info-circle"></i> Informations générales
+                                    </h5>
+                                    <table class="table table-bordered">
+                                        <tbody>
+                                            <tr>
+                                                <th><i class="bi bi-person-badge"></i> Nom</th>
+                                                <td>{{ administration.nom }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-geo-alt"></i> Localisation</th>
+                                                <td>{{ administration.localisation }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-currency-exchange"></i> Devise</th>
+                                                <td>{{ administration.devise }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-globe"></i> Pays</th>
+                                                <td>{{ administration.pays }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-cash-stack"></i> Devise du pays</th>
+                                                <td>{{ administration.devise_pays }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Médias (Logo et Drapeau) -->
+                        <div class="col-md-6 text-center">
+                            <div class="card shadow-sm mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">
+                                        <i class="bi bi-image"></i> Médias
+                                    </h5>
+                                    <div class="mb-3">
+                                        <strong>Logo:</strong><br>
+                                        <img src="{{ administration.logo.url }}" alt="Logo de l'administration" class="img-thumbnail rounded shadow-sm" width="180">
+                                    </div>
+                                    
+                                    {% if administration.drapeau %}
+                                    <div>
+                                        <strong>Drapeau:</strong><br>
+                                        <img src="{{ administration.drapeau.url }}" alt="Drapeau du pays" class="img-thumbnail rounded shadow-sm" width="120">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boutons d'action -->
+                <div class="modal-footer">
+                    <a href="{% url 'administration:modify' administration.id %}" class="btn btn-warning">
+                        <i class="bi bi-pencil-square"></i> Modifier
+                    </a>
+                    <a href="{% url 'administration:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script pour afficher automatiquement le modal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var modal = new bootstrap.Modal(document.getElementById('modifierModal'), {
+                keyboard: false,
+                backdrop: 'static' // Désactive la fermeture du modal en cliquant en dehors
+            });
+            modal.show();
+        });
+    </script>
+
+</div>
+
+{% endblock %}

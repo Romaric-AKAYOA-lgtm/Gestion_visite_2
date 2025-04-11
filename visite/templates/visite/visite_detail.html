@@ -1,0 +1,140 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+    <!-- La modale qui s'ouvre automatiquement au chargement de la page -->
+    <div class="modal fade show" id="visitesModal" tabindex="-1" aria-labelledby="visitesModalLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="visitesModalLabel">Détails des Visites</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="visite-form">
+                        {% csrf_token %}
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 30%;">Nom Visiteur</th>
+                                <td>{{ visite.idvstr.tnm }}</td>
+                            </tr>
+                            <tr>
+                                <th>Prénom</th>
+                                <td>{{ visite.idvstr.tpm }}</td>
+                            </tr>
+                            <tr>
+                                <th>Sexe</th>
+                                <td>{{ visite.idvstr.tsx }}</td>
+                            </tr>
+                            <tr>
+                                <th>Statut Visiteur</th>
+                                <td>{{ visite.idvstr.ttvst }}</td>
+                            </tr>
+                            <tr>
+                                <th>Téléphone</th>
+                                <td>
+                                    <a href="https://web.whatsapp.com/send?phone={{ visite.idvstr.tphne }}" target="_blank">
+                                        {{ visite.idvstr.tphne }}
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Objet</th>
+                                <td>{{ visite.tobjt }}</td>
+                            </tr>
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ visite.ttvst }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date Visite</th>
+                                <td>{{ visite.ddvst|date:"Y-m-d" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Heure Visite</th>
+                                <td>{{ visite.hvst|time:"H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>Statut</th>
+                                <td>{{ visite.tsttvst }}</td>
+                            </tr>
+                            <tr>
+                                <th>Visitée par</th>
+                                <td>
+                                    {{ visite.iddirecteur.tnm }} {{ visite.iddirecteur.tpm }} {{ visite.iddirecteur.ttvst }}
+                                    <a href="https://web.whatsapp.com/send?phone={{ visite.iddirecteur.tphne }}" target="_blank">
+                                        {{ visite.iddirecteur.tphne }}
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <!-- Le bouton pour fermer la modale -->
+                    <a href="{% url 'visite:visite_list' %}" class="btn btn-sm btn-secondary" id="fermerModal">Retour</a>
+                    <a href="{% url 'visite:visite_update' visite.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil-square"></i> Modifier
+                    </a>  
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fond noir pour modal (backdrop) -->
+    <div class="modal-backdrop fade show"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const checkboxes = document.querySelectorAll('.visite-checkbox');
+            const generateBtn = document.getElementById('generate-word');
+
+            // Fonction pour mettre à jour l'état du bouton de génération
+            function updateButtonState() {
+                const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                generateBtn.disabled = !anyChecked;
+            }
+
+            // Initialiser l'état du bouton
+            updateButtonState();
+
+            // Ajout d'un écouteur pour chaque case à cocher
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', updateButtonState);
+            });
+
+            // Événement pour le bouton de génération
+            generateBtn.addEventListener('click', function () {
+                const selected = document.querySelectorAll('input[name="visite_select[]"]:checked');
+                if (selected.length === 0) {
+                    alert("Veuillez sélectionner au moins une visite.");
+                    return;
+                }
+
+                const url = "{% url 'visite:generate_word' %}";
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = url;
+
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = '{{ csrf_token }}';
+                form.appendChild(csrfInput);
+
+                selected.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'visite_select[]';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            });
+        });
+    </script>
+
+{% endblock %}

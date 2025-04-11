@@ -1,0 +1,2 @@
+[console_scripts]
+start-django = Gestion_Visite_2.start_server:start_server

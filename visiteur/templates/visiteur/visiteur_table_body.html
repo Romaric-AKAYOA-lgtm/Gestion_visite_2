@@ -1,0 +1,56 @@
+<!-- visiteur_list.html -->
+
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<!-- Modal pour afficher les résultats de la recherche -->
+<div class="modal fade" id="searchResultsModal" tabindex="-1" aria-labelledby="searchResultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="searchResultsModalLabel">Résultats de la recherche</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Les résultats de la recherche seront injectés ici -->
+          <table class="table table-hover text-center bg-white">
+              <thead class="table-dark">
+                  <tr>
+                      <th>#</th>
+                      <th>Nom</th>
+                      <th>Prénom</th>
+                      <th>Sexe</th>
+                      <th>Téléphone</th>
+                      <th>Email</th>
+                      <th>Date naissance</th>
+                      <th>Statut</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for visiteur in visiteurs %}
+                      <tr>
+                          <td>{{ visiteur.id }}</td>
+                          <td>{{ visiteur.tnm }}</td>
+                          <td>{{ visiteur.tpm }}</td>
+                          <td>{{ visiteur.tsx }}</td>
+                          <td>{{ visiteur.tphne }}</td>
+                          <td>{{ visiteur.teml }}</td>
+                          <td>{{ visiteur.dns }}</td>
+                          <td>{{ visiteur.tstt }}</td>
+                      </tr>
+                  {% empty %}
+                      <tr>
+                          <td colspan="8" class="text-muted">Aucun visiteur trouvé.</td>
+                      </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

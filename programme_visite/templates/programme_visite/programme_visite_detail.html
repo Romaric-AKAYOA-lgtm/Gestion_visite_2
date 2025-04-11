@@ -1,0 +1,68 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<!-- Modale qui s'ouvre automatiquement au chargement -->
+<div class="modal fade show" id="modalVisiteDetail" tabindex="-1" aria-labelledby="modalVisiteDetailLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalVisiteDetailLabel">Détails du Programme de Visite</h5>
+                <a href="{% url 'programme_visite:programme_visite_list' %}" class="btn-close" aria-label="Close"></a>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Visiteur</th>
+                        <td>{{ programme.idvst }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date programmée</th>
+                        <td>{{ programme.ddpvst|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Heure début</th>
+                        <td>{{ programme.hdbt|time:"H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Heure fin</th>
+                        <td>{{ programme.hhf|time:"H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Statut</th>
+                        <td>{{ programme.tsttpvst }}</td>
+                    </tr>
+                    <tr>
+                        <th>Motif</th>
+                        <td>{{ programme.motif }}</td>
+                    </tr>
+                    <tr>
+                        <th>Secrétaire</th>
+                        <td>{{ programme.secretaire.tnm }} {{ programme.secretaire.tpm }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'programme_visite:programme_visite_list' %}" class="btn btn-secondary btn-sm">Retour à la liste</a>
+                <a href="{% url 'programme_visite:programme_visite_update' programme.id %}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil-square"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fond noir (backdrop) -->
+<div class="modal-backdrop fade show"></div>
+
+{% endblock %}
+
+<script>
+    // Afficher la modale automatiquement au chargement de la page
+    document.addEventListener('DOMContentLoaded', function () {
+        var myModal = new bootstrap.Modal(document.getElementById('modalVisiteDetail'), {
+            keyboard: false
+        });
+        myModal.show();  // Affiche la modale automatiquement dès le chargement
+    });
+</script>

@@ -1,0 +1,192 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<style>
+    .btn-marine {
+        background-color: #003366;
+        border-color: #003366;
+        color: white;
+    }
+
+    .btn-marine:hover {
+        background-color: #002244;
+        border-color: #002244;
+        color: white;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .user-checkbox {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+
+<div class="container-fluid mt-5">
+    <h2 class="text-center mb-4 text-white">Utilisateurs Répartis par Rôle</h2>
+
+    <div class="text-end mb-3">
+        <button id="generate-word" class="btn btn-marine me-2" disabled>Générer Word</button>
+    </div>
+
+    <!-- Liste des Visiteurs -->
+    <h3 class="text-white">Liste des Visiteurs</h3>
+    <div class="table-responsive mb-5 bg-white p-3 rounded shadow">
+        <table class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for visiteur in visiteurs %}
+                <tr>
+                    <td><input type="checkbox" name="user_select[]" value="{{ visiteur.id }}" class="user-checkbox"></td>
+                    <td>{{ visiteur.tnm }}</td>
+                    <td>{{ visiteur.tpm }}</td>
+                    <td>{{ visiteur.teml }}</td>
+                    <td>{{ visiteur.tstt }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted">Aucun visiteur trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Liste des Directeurs -->
+    <h3 class="text-white">Liste des Directeurs</h3>
+    <div class="table-responsive mb-5 bg-white p-3 rounded shadow">
+        <table class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for directeur in directeurs %}
+                <tr>
+                    <td><input type="checkbox" name="user_select[]" value="{{ directeur.id }}" class="user-checkbox"></td>
+                    <td>{{ directeur.tnm }}</td>
+                    <td>{{ directeur.tpm }}</td>
+                    <td>{{ directeur.teml }}</td>
+                    <td>{{ directeur.tstt }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-muted">Aucun directeur trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Liste des Secrétaires -->
+    <h3 class="text-white">Liste des Secrétaires</h3>
+    <div class="table-responsive bg-white p-3 rounded shadow">
+        <table class="table table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Nom</th>
+                    <th>Prénom</th>
+                    <th>Email</th>
+                    <th>Directeur</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for secretaire in secretaires %}
+                <tr>
+                    <td><input type="checkbox" name="user_select[]" value="{{ secretaire.id }}" class="user-checkbox"></td>
+                    <td>{{ secretaire.tnm }}</td>
+                    <td>{{ secretaire.tpm }}</td>
+                    <td>{{ secretaire.teml }}</td>
+                    <td>{{ secretaire.directeur.tnm }} {{ secretaire.directeur.tpm }}</td>
+                    <td>{{ secretaire.tstt }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-muted">Aucun secrétaire trouvé.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modale de Bienvenue -->
+<div class="modal fade" id="autoModal" tabindex="-1" aria-labelledby="autoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="autoModalLabel">Bienvenue</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        Bonjour ! Voici la liste des utilisateurs répartis par rôle.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Affichage automatique de la modale
+        const myModal = new bootstrap.Modal(document.getElementById('autoModal'));
+        myModal.show();
+
+        // Activer/Désactiver le bouton Générer Word
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        const generateBtn = document.getElementById('generate-word');
+
+        function updateButtonState() {
+            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+            generateBtn.disabled = !anyChecked;
+        }
+
+        updateButtonState();
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateButtonState);
+        });
+
+        generateBtn.addEventListener('click', function () {
+            const selected = document.querySelectorAll('input[name="user_select[]"]:checked');
+            if (selected.length === 0) {
+                alert("Veuillez sélectionner au moins un utilisateur.");
+                return;
+            }
+
+            const url = "{% url 'secretaire:generate_word' %}";
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = url;
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+
+            selected.forEach(cb => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'user_select[]';
+                input.value = cb.value;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+        });
+    });
+</script>
+{% endblock %}

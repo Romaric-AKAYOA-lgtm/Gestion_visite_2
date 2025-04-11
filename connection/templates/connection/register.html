@@ -1,0 +1,88 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="container mt-4">
+    <!-- Modal Inscription -->
+    <div class="modal fade show" id="modalInscription" tabindex="-1" aria-labelledby="modalInscriptionLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalInscriptionLabel">Inscription</h5>
+                </div>
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <form action="{% url 'connection:register' %}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate onsubmit="return validatePasswords()">
+                        {% csrf_token %}
+                    
+                        <!-- ComboBox pour sélectionner un utilisateur -->
+                        <div class="mb-3">
+                            <label for="user" class="form-label">Choisir un utilisateur</label>
+                            <select class="form-control input-focus-blue" id="user" name="user" required>
+                                <option value="">Sélectionner un utilisateur</option> 
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">{{ user.tnm }} {{ user.tpm }}  {{ user.ttvst }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Champ pour le Nom d'utilisateur -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control input-focus-blue" id="username" name="username" required>
+                        </div>
+                        
+                        <!-- Champ pour le mot de passe -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control input-focus-blue" id="password" name="password" required>
+                        </div>
+
+                        <!-- Champ pour confirmer le mot de passe -->
+                        <div class="mb-3">
+                            <label for="password_confirm" class="form-label">Confirmer le mot de passe</label>
+                            <input type="password" class="form-control input-focus-blue" id="password_confirm" name="password_confirm" required>
+                        </div>
+
+                        <div class="text-end">
+                             <a href="{% url 'home' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 btn-sm">S'inscrire</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script pour verrouiller le modal ouvert jusqu'à une action -->
+<script>
+    window.onload = function() {
+        var myModal = new bootstrap.Modal(document.getElementById("modalInscription"), {
+            keyboard: false,
+            backdrop: 'static'  // Empêche la fermeture en cliquant à l'extérieur
+        });
+        myModal.show();
+    }
+
+    // Validation de la correspondance des mots de passe
+    function validatePasswords() {
+        var password = document.getElementById("password").value;
+        var passwordConfirm = document.getElementById("password_confirm").value;
+
+        if (password !== passwordConfirm) {
+            alert("Les mots de passe ne correspondent pas.");
+            return false; // Empêche l'envoi du formulaire si les mots de passe ne correspondent pas
+        }
+        return true; // Permet l'envoi du formulaire si les mots de passe sont corrects
+    }
+</script>
+
+{% endblock %}

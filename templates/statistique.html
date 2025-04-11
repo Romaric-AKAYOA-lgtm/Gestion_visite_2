@@ -1,0 +1,211 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}         
+<style>
+    .btn-marine {
+        background-color: #003366;
+        border-color: #003366;
+        color: white;
+    }
+
+    .btn-marine:hover {
+        background-color: #002244;
+        border-color: #002244;
+        color: white;
+    }
+
+    .search-input {
+        max-width: 300px;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+
+    .visite-checkbox {
+        width: 20px;
+        height: 20px;
+    }
+</style>
+
+<div class="container-fluid">
+
+    <!-- En-tête de la page -->
+    <div class="row mb-4 text-white">
+        <div class="col-12">
+            <h1 class="text-center">Statistiques des Visites</h1>
+            <p class="text-center">Bonjour, {{ username }}. Voici les statistiques des visites par année.</p>
+        </div>
+        <div class="col-3">
+            <a href="{% url 'liste_utilisateurs' %}" class="btn btn-marine me-2">
+                <i class="bi bi-person-plus"></i> Imprimer fichiers
+            </a>
+        </div>
+    </div>
+
+    <!-- Section 1: Graphique - Évolution des visites par année -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Évolution des visites par année (Directeur)</h5>
+                    <div class="text-center">
+                        <img id="graph1" src="data:image/png;base64,{{ graph_url }}" alt="Évolution des visites par année" class="img-fluid" onclick="openFullscreen(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Graphique - Progression des heures moyennes d'un programme de visite -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Progression des heures moyennes d'un programme de visite par année</h5>
+                    <div class="text-center">
+                        <img id="graph2" src="data:image/png;base64,{{ graph_url2 }}" alt="Progression des heures moyennes" class="img-fluid" onclick="openFullscreen(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Liste des visites (tableau) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Liste des Visites</h5>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID Visite</th>
+                                <th scope="col">Date Visite</th>
+                                <th scope="col">Heure Visite</th>
+                                <th scope="col">Directeur</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visite in visites %}
+                                <tr>
+                                    <td>{{ visite.id }}</td>
+                                    <td>{{ visite.ddvst }}</td>
+                                    <td>{{ visite.hvst }}</td>
+                                    <td>{{ visite.iddirecteur }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 4: Liste des Secrétaires et leurs Directeurs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Liste des Secrétaires et leurs Directeurs</h5>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Secrétaire</th>
+                                <th scope="col">Directeur</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for secretaire in secretaires_data %}
+                                <tr>
+                                    <td>{{ secretaire.secretaire }}</td>
+                                    <td>{{ secretaire.directeur }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 5: Liste des Visiteurs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Liste des Visiteurs</h5>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom Visiteur</th>
+                                <th scope="col">Date Crétion</th>
+                                <th scope="col">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for visiteur in visiteurs %}
+                                <tr>
+                                    <td>{{ visiteur.tnm }} {{ visiteur.tpm }}</td>
+                                    <td>{{ visiteur.dsb }}</td>
+                                    <td>{{ visiteur.ttvst  }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 6: Liste des Programmes de Visites Confirmés et Annulés -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Programmes de Visites Confirmés et Annulés</h5>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Nom Visiteur</th>
+                                <th scope="col">Date Visite</th>
+                                <th scope="col">Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for programme in programmes_confirmes %}
+                                <tr>
+                                    <td>{{ programme.idvst.idvstr.tnm }}</td>
+                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}</td>
+                                    <td>{{ programme.tsttpvst }}</td>
+                                </tr>
+                            {% endfor %}
+                            {% for programme in programmes_annules %}
+                                <tr>
+                                    <td>{{ programme.idvst.idvstr.tnm }}</td>
+                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}</td>
+                                    <td>{{ programme.tsttpvst }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript pour afficher les images en plein écran -->
+<script>
+    function openFullscreen(imgElement) {
+        if (imgElement.requestFullscreen) {
+            imgElement.requestFullscreen();
+        } else if (imgElement.mozRequestFullScreen) { // Firefox
+            imgElement.mozRequestFullScreen();
+        } else if (imgElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
+            imgElement.webkitRequestFullscreen();
+        } else if (imgElement.msRequestFullscreen) { // IE/Edge
+            imgElement.msRequestFullscreen();
+        }
+    }
+</script>
+
+{% endblock %}

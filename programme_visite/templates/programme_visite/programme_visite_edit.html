@@ -1,0 +1,134 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="modal fade" id="modifierProgrammeVisiteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modifierProgrammeVisiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="modifierProgrammeVisiteModalLabel">Modifier le Programme de Visite</h5>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'programme_visite:programme_visite_update' programme.id %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <!-- Sélectionner une Visite -->
+                    <div class="mb-3">
+                        <label for="{{ form.idvst.id_for_label }}" class="form-label">Visite</label>
+                        
+                        <!-- Champ visible mais désactivé pour afficher le texte de la visite -->
+                        <input type="text" class="form-control" value="Visite de : {{ form.instance.idvst.idvstr.tnm }} {{ form.instance.idvst.idvstr.tpm }} - {{ form.instance.idvst.tobjt }} avec {{ form.instance.idvst.iddirecteur.tnm }} {{ form.instance.idvst.iddirecteur.tpm }}" disabled>
+
+                        <!-- Champ caché basé sur le formulaire Django -->
+                        {{ form.idvst.as_hidden }}
+                    </div>
+
+                    <!-- Date Programmée -->
+                    <div class="mb-3">
+                        <label for="ddpvst" class="form-label">Date Programmée de Visite</label>
+                        <input type="date" class="form-control" name="ddpvst" value="{{ form.instance.ddpvst|date:'Y-m-d' }}" {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}readonly{% endif %}>
+                    </div>
+
+                    <!-- Heure de Début -->
+                    <div class="mb-3">
+                        <label for="hdbt" class="form-label">Heure de Début</label>
+                        <input type="time" class="form-control" name="hdbt" value="{{ form.instance.hdbt|time:'H:i' }}" {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}readonly{% endif %}>
+                    </div>
+
+                    <!-- Heure de Fin -->
+                    <div class="mb-3">
+                        <label for="hhf" class="form-label">Heure de Fin</label>
+                        <input type="time" class="form-control" name="hhf" value="{{ form.instance.hhf|time:'H:i' }}" {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}readonly{% endif %}>
+                    </div>
+
+                    <!-- Statut du Programme -->
+                    <div class="mb-3">
+                        <label for="tsttpvst" class="form-label">Statut du Programme</label>
+                        <select class="form-select" name="tsttpvst" id="statut" {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}disabled{% endif %}>
+                            <option value="confirmé" {% if form.instance.tsttpvst == 'confirmé' %}selected{% endif %}>Confirmé</option>
+                            <option value="annulé" {% if form.instance.tsttpvst == 'annulé' %}selected{% endif %}>Annulé</option>
+                        </select>
+                    </div>
+
+                    <!-- Motif d'annulation -->
+                    <div class="mb-3" id="motif-container" style="display: none;">
+                        <label for="motif" class="form-label">Motif d'annulation</label>
+                        <select class="form-control" name="motif" id="motif">
+                            <option value="" selected disabled>Choisissez un motif</option>
+                            <option value="visiteur occupé" {% if form.motif.value == 'visiteur occupé' %}selected{% endif %}>Visiteur occupé</option>
+                            <option value="directeur occupé" {% if form.motif.value == 'directeur occupé' %}selected{% endif %}>Directeur occupé</option>
+                        </select>
+                    </div>
+
+                    <!-- Sélectionner une Secrétaire -->
+                    <div class="mb-3">
+                        <label for="secretaire" class="form-label">Sélectionner une Secrétaire</label>
+                        <select class="form-select" name="secretaire" required {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}disabled{% endif %}>
+                            <option value="">-- Sélectionner une Secrétaire --</option>
+                            <option value="{{ secretaire_recente.id }}" {% if secretaire_recente.id == form.instance.secretaire.id %}selected{% endif %}>
+                                {{ secretaire_recente.tnm }} {{ secretaire_recente.tpm }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'programme_visite:programme_visite_list' %}" class="btn btn-secondary" id="fermerModal">Retour</a>
+                        <button type="submit" class="btn btn-warning" {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}disabled{% endif %}>Modifier le Programme</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statutSelect = document.getElementById("statut");
+        const motifContainer = document.getElementById("motif-container");
+
+        // Initial display for "confirmé" or "annulé" status
+        toggleMotifField(statutSelect.value);
+
+        // Listen for changes to the statut select dropdown
+        statutSelect.addEventListener('change', function () {
+            toggleMotifField(statutSelect.value);
+        });
+
+        // Function to toggle the motif textarea based on statut
+        function toggleMotifField(statut) {
+            if (statut === 'annulé') {
+                motifContainer.style.display = 'block';  // Show the motif field
+            } else {
+                motifContainer.style.display = 'none';  // Hide the motif field
+            }
+        }
+
+        // Modal behavior
+        var myModalEl = document.getElementById('modifierProgrammeVisiteModal');
+        var myModal = new bootstrap.Modal(myModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        myModal.show();
+
+        myModalEl.addEventListener('hidden.bs.modal', function (event) {
+            event.preventDefault();
+            myModal.show();
+        });
+
+        document.getElementById("fermerModal").addEventListener("click", function(event) {
+            myModal.hide();
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

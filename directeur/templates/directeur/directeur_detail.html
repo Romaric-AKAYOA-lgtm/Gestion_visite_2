@@ -1,0 +1,60 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<!-- Modal affichée automatiquement -->
+<div class="modal fade show" id="modalDirecteur" tabindex="-1" aria-labelledby="modalDirecteurLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDirecteurLabel">Détails du Directeur</h5>
+                <a href="{% url 'directeur:directeur_list' %}" class="btn-close" aria-label="Close"></a>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tr><th>Nom</th><td>{{ directeur.tnm }}</td></tr>
+                    <tr><th>Prénom</th><td>{{ directeur.tpm }}</td></tr>
+                    <tr><th>Date de naissance</th><td>{{ directeur.dns }}</td></tr>
+                    <tr><th>Adresse</th><td>{{ directeur.tads }}</td></tr>
+                    <tr>
+                        <th>Date début</th>
+                        <td>{{ directeur.dsb|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date fin</th>
+                        <td>{{ directeur.ddf|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr><th>Statut directeur</th><td>{{ directeur.ttvst }}</td></tr>
+                    <tr><th>Statut</th><td>{{ directeur.tstt }}</td></tr>
+                    <tr>
+                        <th>Email</th>
+                        <td>
+                            <a href="mailto:{{ directeur.teml }}?subject=Votre%20sujet&body=Bonjour%20{{ directeur.tnm }},%0A%0A" class="text-decoration-none">
+                                <i class="bi bi-envelope"></i> {{ directeur.teml }}
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Numéro de téléphone</th>
+                        <td>
+                            <a href="https://web.whatsapp.com/send?phone={{ directeur.tphne }}" target="_blank">
+                                {{ directeur.tphne }}
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'directeur:directeur_list' %}" class="btn btn-secondary btn-sm">Retour à la liste</a>
+                <a href="{% url 'directeur:directeur_update' directeur.id %}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil-square"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fond noir -->
+<div class="modal-backdrop fade show"></div>
+
+{% endblock %}

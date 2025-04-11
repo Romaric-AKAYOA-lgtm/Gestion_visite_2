@@ -1,0 +1,92 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="container mt-4">
+    <!-- Arrière-plan grisé -->
+    <div id="backdrop" class="backdrop"></div>
+
+    <!-- Modale Bootstrap avec effet d'ombre -->
+    <div class="modal fade show d-block" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginModalLabel">Connexion</h5>
+             </div>
+                <div class="modal-body">
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Gestion des erreurs du formulaire -->
+                        {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Erreur de connexion :</strong><br>
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }}</strong> : 
+                                    <ul>
+                                        {% for error in field.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control shadow-sm" id="username" name="username" required>
+                            {% if form.username.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.username.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Mot de passe</label>
+                            <input type="password" class="form-control shadow-sm" id="password" name="password" required>
+                            {% if form.password.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.password.errors %}
+                                        <small>{{ error }}</small><br>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 shadow">Se connecter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Style CSS pour l'effet de fond gris -->
+<style>
+    .backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1040;
+        display: block;
+    }
+</style>
+
+<!-- Script Bootstrap et gestion du modale -->
+<script>
+    function closeModal() {
+        document.getElementById("loginModal").classList.remove("d-block");
+        document.getElementById("loginModal").classList.add("d-none");
+        document.getElementById("backdrop").style.display = "none"; // Cache l'arrière-plan gris
+    }
+</script>
+
+{% endblock %}

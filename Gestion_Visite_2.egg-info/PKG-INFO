@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: Gestion_Visite_2
+Version: 1.0
+Summary: Application de gestion des visites
+Home-page: https://github.com/ton-projet/Gestion_Visite_2
+Author: Ton Nom
+Author-email: ton.email@example.com
+License: MIT
+Project-URL: Documentation, https://github.com/ton-projet/Gestion_Visite_2/wiki
+Project-URL: Code Source, https://github.com/ton-projet/Gestion_Visite_2
+Project-URL: Issues, https://github.com/ton-projet/Gestion_Visite_2/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: project-url
+Dynamic: requires-python
+Dynamic: summary

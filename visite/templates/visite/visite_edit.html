@@ -1,0 +1,131 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<div class="modal fade" id="modifierVisiteModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modifierVisiteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="modifierVisiteModalLabel">Modifier la Visite</h5>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'visite:visite_update' visite.pk %}" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field in form %}
+                                {% if field.errors %}
+                                    <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Visiteur -->
+                    <div class="mb-3">
+                        <label for="idvstr" class="form-label">Visiteur</label>
+                        <select class="form-select" name="idvstr" id="idvstr" disabled>
+                            {% for visiteur in visiteurs %}
+                                <option value="{{ visiteur.id }}" {% if visiteur.id == visite.idvstr.id %}selected{% endif %}>
+                                    {{ visiteur.tnm }} {{ visiteur.tpm }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <!-- Champ caché pour envoyer la valeur de "Visiteur" -->
+                        <input type="hidden" name="idvstr" value="{{ visite.idvstr.id }}">
+                    </div>
+
+                    <!-- Date de Visite -->
+                    <div class="mb-3">
+                        <label for="ddvst" class="form-label">Date de Visite</label>
+                        <input type="date" class="form-control" name="ddvst" value="{{ visite.ddvst|date:'Y-m-d' }}">
+                    </div>
+
+                    <!-- Heure de Visite -->
+                    <div class="mb-3">
+                        <label for="hvst" class="form-label">Heure de Visite</label>
+                        <input type="time" class="form-control" name="hvst" value="{{ visite.hvst|time:'H:i' }}">
+                    </div>
+
+                    <!-- Objet -->
+                    <div class="mb-3">
+                        <label for="tobjt" class="form-label">Objet</label>
+                        <textarea class="form-control" name="tobjt">{{ visite.tobjt }}</textarea>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3">
+                        <label for="ttvst" class="form-label">Description</label>
+                        <textarea class="form-control" name="ttvst" rows="3" placeholder="ex : externe, interne">{{ visite.ttvst }}</textarea>
+                    </div>
+
+                    <!-- Directeur -->
+                    <div class="mb-3">
+                        <label for="iddirecteur" class="form-label">Directeur</label>
+                        <select class="form-select" name="iddirecteur" id="iddirecteur" disabled>
+                            {% for secretaire in directeurs %}
+                                <option value="{{ secretaire.directeur.id }}" {% if secretaire.directeur.id == visite.iddirecteur.id %}selected{% endif %}>
+                                    {{ secretaire.directeur.tnm }} {{ secretaire.directeur.tpm }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <!-- Champ caché pour envoyer la valeur de "Directeur" -->
+                        <input type="hidden" name="iddirecteur" value="{{ visite.iddirecteur.id }}">
+                    </div>
+
+                    <!-- Statut -->
+                    <div class="mb-3">
+                        <label for="tsttvst" class="form-label">Statut</label>
+                        <select class="form-select" name="tsttvst" id="tsttvst">
+                            <option value="confirmé" {% if visite.tsttvst == 'confirmé' %}selected{% endif %}>Confirmé</option>
+                            <option value="annulé" {% if visite.tsttvst == 'annulé' %}selected{% endif %}>Annulé</option>
+                        </select>
+                    </div>
+
+                    <!-- Motif d'annulation -->
+                    <div class="mb-3" id="motif-container" style="display: none;">
+                        <label for="tmtf" class="form-label">Motif d'annulation</label>
+                        <textarea class="form-control" name="tmtf" rows="3">{{ visite.tmtf }}</textarea>
+                    </div>
+
+                    <div class="text-end">
+                        <a href="{% url 'visite:visite_list' %}" class="btn btn-secondary" id="fermerModal">Retour</a>
+                        <button type="submit" class="btn btn-warning">Modifier</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const statutVisite = document.getElementById('tsttvst');
+        const motifContainer = document.getElementById('motif-container');
+
+        motifContainer.style.display = statutVisite.value === 'annulé' ? 'block' : 'none';
+
+        statutVisite.addEventListener('change', function () {
+            motifContainer.style.display = statutVisite.value === 'annulé' ? 'block' : 'none';
+        });
+
+        var myModalEl = document.getElementById('modifierVisiteModal');
+        var myModal = new bootstrap.Modal(myModalEl, {
+            backdrop: 'static',
+            keyboard: false
+        });
+        myModal.show();
+
+        myModalEl.addEventListener('hidden.bs.modal', function (event) {
+            event.preventDefault();
+            myModal.show();
+        });
+
+        document.getElementById("fermerModal").addEventListener("click", function(event) {
+            myModal.hide();
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

@@ -1,0 +1,238 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+<style>
+    .hero-section {
+        height: 400px;
+        overflow: hidden;
+    }
+    .hero-bg {
+        height: 400px;
+        object-fit: cover;
+        filter: brightness(50%);
+    }
+    .hero-content {
+        z-index: 2;
+    }
+
+    /* Styles pour le défilement et l'effet de survol des cartes */
+    .card {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+    .card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .card-body {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+
+<!-- Hero Section -->
+<div class="hero-section position-relative text-center text-white">
+    <div id="heroCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img src="/static/image/administration-1867877_1280.jpg" class="d-block w-100 hero-bg" alt="Image 1">
+            </div>
+            <div class="carousel-item">
+                <img src="/static/image/city-182223_1280.jpg" class="d-block w-100 hero-bg" alt="Image 2">
+            </div>
+            <div class="carousel-item">
+                <img src="/static/image/city-7352352_1280.jpg" class="d-block w-100 hero-bg" alt="Image 3">
+            </div>
+            <div class="carousel-item">
+                <img src="/static/image/istockphoto-2162033406-1024x1024.jpg" class="d-block w-100 hero-bg" alt="Image 4">
+            </div>
+        </div>
+    </div>
+    <div class="hero-content position-absolute top-50 start-50 translate-middle w-100">
+        <h1 class="fw-bold">Gestion des visites</h1>
+        <p class="lead">Optimisez la gestion des programmes des visites avec un suivi efficace et structuré.</p>
+    </div>
+</div>
+
+<div class="mt-5 mb-3">
+
+    <!-- 🟢 Première ligne -->
+    <div class="row g-4 justify-content-center">
+        <!-- Directeurs -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-dark text-white text-center">
+                    Directeurs
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped bg-pr">
+                        <thead class="table-primary">
+                            <tr><th>Nom</th><th>Prénom</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for directeur in directeurs %}
+                                <tr><td>{{ directeur.tnm }}</td><td>{{ directeur.tpm }}</td></tr>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center text-muted">Aucun directeur</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secrétaires -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-secondary text-white text-center">
+                    Secrétaires
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-secondary">
+                            <tr><th>Nom</th><th>Prénom</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for secretaire in secretaires %}
+                                <tr><td>{{ secretaire.tnm }}</td><td>{{ secretaire.tpm}}</td></tr>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center text-muted">Aucun secrétaire</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visiteurs -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white text-center">
+                    Visiteurs
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-primary">
+                            <tr><th>Nom</th><th>Prénom</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for visiteur in visiteurs %}
+                                <tr><td>{{ visiteur.tnm }}</td><td>{{ visiteur.tpm }}</td></tr>
+                            {% empty %}
+                                <tr><td colspan="2" class="text-center text-muted">Aucun visiteur</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🟡 Deuxième ligne -->
+    <div class="row g-4 justify-content-center mt-4">
+        <!-- Visites en Cours -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-success text-white text-center">
+                    Visites en Cours
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            {% for visite in visites_en_cours %}
+                                <tr><td>{{ visite }}</td></tr>
+                            {% empty %}
+                                <tr><td class="text-center text-muted">Aucune visite en cours</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Programmes Reportés -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-danger text-white text-center">
+                    Programmes Reportés
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            {% for programme in programmes_reportes %}
+                                <tr><td>{{ programme }}</td></tr>
+                            {% empty %}
+                                <tr><td class="text-center text-muted">Aucun programme reporté</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visites du Jour -->
+        <div class="col-12 col-sm-5 col-md-4 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-info text-white text-center">
+                    Visites du Jour
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            {% for visite in visites_du_jour %}
+                                <tr><td>{{ visite }}</td></tr>
+                            {% empty %}
+                                <tr><td class="text-center text-muted">Aucune visite aujourd'hui</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🔵 Troisième ligne -->
+    <div class="row g-4 justify-content-center mt-4">
+        <!-- Visites de la Semaine -->
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-primary text-white text-center">
+                    Visites de la Semaine
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            {% for visite in visites_de_la_semaine %}
+                                <tr><td>{{ visite }}</td></tr>
+                            {% empty %}
+                                <tr><td class="text-center text-muted">Aucune visite cette semaine</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visites du Mois -->
+        <div class="col-12 col-sm-6 col-md-6 col-lg-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-warning text-dark text-center">
+                    Visites du Mois
+                </div>
+                <div class="card-body overflow-auto" style="max-height: 200px;">
+                    <table class="table table-bordered table-striped">
+                        <tbody>
+                            {% for visite in visites_du_mois %}
+                                <tr><td>{{ visite }}</td></tr>
+                            {% empty %}
+                                <tr><td class="text-center text-muted">Aucune visite ce mois-ci</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,92 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: auto;
+    min-width: 30;
+}
+
+.hero {
+    background-color: #FFA500;
+    color: white;
+    padding: 50px 0;
+    text-align: center;
+}
+
+.icon-circle {
+    width: 100px;
+    height: 100px;
+    background-color: #FFA500;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    font-size: 30px;
+    margin: 20px auto;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-10px);
+}
+
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+}
+
+footer a {
+    color: #FFA500;
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+.btn-floating {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+.hero {
+    background: #f8f9fa;
+    padding: 50px 0;
+    text-align: center;
+}
+.icon-circle {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #007bff;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+}
+#scrollToTopBtn {
+    z-index: 999;
+}
+
+/* Effet de focus bleu sur les champs input */
+.form-control:focus, .form-select:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important;
+    outline: none !important;
+}
