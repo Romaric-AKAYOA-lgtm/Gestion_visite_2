@@ -5,7 +5,11 @@ from django.db.models import Avg, Count, F
 import matplotlib.pyplot as plt
 import io
 import base64
-
+from docx.shared import Pt
+from django.utils import timezone
+from datetime import datetime
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.section import WD_ORIENT
 from programme_visite.models import ClProgrammeVisite
 from secretaire.models import ClSecretaire
 from visite.models import ClVisite
@@ -100,134 +104,202 @@ def tatitistique_view(request):
         'programmes_annules': programmes_annules
     })
 
-# fichier : users/views.py (ou un fichier views.py central selon ton organisation)
-
 from django.shortcuts import render
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from docx import Document
 from visiteur.models import ClVisiteur
 from directeur.models import ClDirecteur
 from secretaire.models import ClSecretaire
+from visite.models import ClVisite
+from programme_visite.models import ClProgrammeVisite
 
 def liste_utilisateurs(request):
+    username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
+    if not username:
+        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     visiteurs = ClVisiteur.objects.all()
     directeurs = ClDirecteur.objects.all()
-    secretaires = ClSecretaire.objects.select_related('directeur').all()  # chargement du directeur lié
-
-    context = {
+    secretaires = ClSecretaire.objects.select_related('directeur').all()
+    return render(request, 'liste_utilisateurs.html', {
         'visiteurs': visiteurs,
         'directeurs': directeurs,
-        'secretaires': secretaires,
-    }
-    return render(request, 'liste_utilisateurs.html', context)
+        'secretaires': secretaires, 
+        'username':username,
+    })
 
-# views.py
+@csrf_exempt
+def generate_word(request):
+    username = get_connected_user(request)
 
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from visiteur.models import ClVisiteur
-from directeur.models import ClDirecteur
-from secretaire.models import ClSecretaire
-from docx import Document
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from visiteur.models import ClVisiteur
-from directeur.models import ClDirecteur
-from secretaire.models import ClSecretaire
-from docx import Document
-from django.http import HttpResponse, JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from visiteur.models import ClVisiteur
-from directeur.models import ClDirecteur
-from secretaire.models import ClSecretaire
-from docx import Document
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
+    if not username:
+        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
-@csrf_exempt  # Utiliser @csrf_exempt si vous avez un problème avec le token CSRF, mais veillez à sécuriser cette route autrement
-def export_word(request):
     if request.method == "POST":
-        # Récupération des identifiants envoyés via POST
         visiteurs_ids = request.POST.getlist("visiteurs")
         directeurs_ids = request.POST.getlist("directeurs")
         secretaires_ids = request.POST.getlist("secretaires")
 
-        if not visiteurs_ids and not directeurs_ids and not secretaires_ids:
-            return JsonResponse({'error': 'Aucun utilisateur sélectionné.'}, status=400)
-
-        # Récupération des objets à partir des IDs
-        visiteurs = ClVisiteur.objects.filter(id__in=visiteurs_ids)
-        directeurs = ClDirecteur.objects.filter(id__in=directeurs_ids)
-        secretaires = ClSecretaire.objects.filter(id__in=secretaires_ids)
-
-        # Création du document Word
         doc = Document()
-        doc.add_heading('Résumé des utilisateurs sélectionnés', 0)
+        doc.add_heading("Résumé des utilisateurs sélectionnés", 0)
 
-        # SECTION VISITEURS
-        doc.add_heading('Visiteurs', level=1)
-        if visiteurs.exists():
-            table = doc.add_table(rows=1, cols=5)
-            hdr_cells = table.rows[0].cells
-            hdr_cells[0].text = 'Nom'
-            hdr_cells[1].text = 'Prénom'
-            hdr_cells[2].text = 'Sexe'
-            hdr_cells[3].text = 'Email'
-            hdr_cells[4].text = 'Téléphone'
+        # === VISITEURS ===
+        if visiteurs_ids:
+            doc.add_heading("Visiteurs", level=1)
+            visiteurs = ClVisiteur.objects.filter(id__in=visiteurs_ids)
             for v in visiteurs:
-                row = table.add_row().cells
-                row[0].text = v.tnm or ""
-                row[1].text = v.tpm or ""
-                row[2].text = v.tsx or ""
-                row[3].text = v.teml or ""
-                row[4].text = v.tphne or ""
-        else:
-            doc.add_paragraph("Aucun visiteur sélectionné.")
+                table = doc.add_table(rows=1, cols=2)
+                table.style = 'Table Grid'
+                fields = [
+                    ("Nom complet", f"{v.tnm} {v.tpm}"),
+                    ("Sexe", v.tsx),
+                    ("Date de naissance", str(v.dns) if v.dns else ""),
+                    ("Téléphone", v.tphne),
+                    ("Email", v.teml)
+                ]
+                for label, value in fields:
+                    if value:
+                        row = table.add_row().cells
+                        row[0].text = label
+                        row[1].text = value
 
-        # SECTION DIRECTEURS
-        doc.add_heading('Directeurs', level=1)
-        if directeurs.exists():
-            table = doc.add_table(rows=1, cols=5)
-            hdr_cells = table.rows[0].cells
-            hdr_cells[0].text = 'Nom'
-            hdr_cells[1].text = 'Prénom'
-            hdr_cells[2].text = 'Sexe'
-            hdr_cells[3].text = 'Email'
-            hdr_cells[4].text = 'Téléphone'
+                visites = ClVisite.objects.filter(idvstr=v)
+
+                doc.add_paragraph("")
+
+                # Programmes Confirmés
+                confirmes = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='confirmé')
+                if confirmes.exists():
+                    doc.add_heading("Programmes Confirmés", level=3)
+                    tbl_conf = doc.add_table(rows=1, cols=3)
+                    tbl_conf.style = 'Light Grid Accent 1'
+                    hdr = tbl_conf.rows[0].cells
+                    hdr[0].text = "Date"
+                    hdr[1].text = "Heure"
+                    hdr[2].text = "Directeur"
+                    for p in confirmes:
+                        directeur = p.idvst.iddirecteur
+                        row = tbl_conf.add_row().cells
+                        row[0].text = str(p.ddpvst)
+                        row[1].text = str(p.hdbt)
+                        row[2].text = f"{directeur.tnm} {directeur.tpm}"
+                    doc.add_paragraph("")  # mb-2
+
+                # Programmes Annulés
+                annules = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='annulé')
+                if annules.exists():
+                    doc.add_heading("Programmes Annulés", level=3)
+                    tbl_annul = doc.add_table(rows=1, cols=3)
+                    tbl_annul.style = 'Light Grid Accent 2'
+                    hdr = tbl_annul.rows[0].cells
+                    hdr[0].text = "Date"
+                    hdr[1].text = "Heure"
+                    hdr[2].text = "Motif"
+                    for p in annules:
+                        row = tbl_annul.add_row().cells
+                        row[0].text = str(p.ddpvst)
+                        row[1].text = str(p.hdbt)
+                        row[2].text = p.motif or "Non spécifié"
+                    doc.add_paragraph("")  # mb-2
+
+        # === DIRECTEURS ===
+        if directeurs_ids:
+            doc.add_heading("Directeurs", level=1)
+            directeurs = ClDirecteur.objects.filter(id__in=directeurs_ids)
             for d in directeurs:
-                row = table.add_row().cells
-                row[0].text = d.tnm or ""
-                row[1].text = d.tpm or ""
-                row[2].text = d.tsx or ""
-                row[3].text = d.teml or ""
-                row[4].text = d.tphne or ""
-        else:
-            doc.add_paragraph("Aucun directeur sélectionné.")
+                table = doc.add_table(rows=1, cols=2)
+                table.style = 'Table Grid'
+                fields = [
+                    ("Nom complet", f"{d.tnm} {d.tpm}"),
+                    ("Téléphone", d.tphne),
+                    ("Email", d.teml)
+                ]
+                for label, value in fields:
+                    if value:
+                        row = table.add_row().cells
+                        row[0].text = label
+                        row[1].text = value
 
-        # SECTION SECRETAIRES
-        doc.add_heading('Secrétaires', level=1)
-        if secretaires.exists():
-            table = doc.add_table(rows=1, cols=6)
-            hdr_cells = table.rows[0].cells
-            hdr_cells[0].text = 'Nom'
-            hdr_cells[1].text = 'Prénom'
-            hdr_cells[2].text = 'Sexe'
-            hdr_cells[3].text = 'Email'
-            hdr_cells[4].text = 'Téléphone'
-            hdr_cells[5].text = 'Directeur'
+                visites_dir = ClVisite.objects.filter(iddirecteur=d)
+                programmes = ClProgrammeVisite.objects.filter(idvst__in=visites_dir)
+
+                if programmes.exists():
+                    doc.add_heading("Programmes Associés", level=3)
+                    tbl_prog = doc.add_table(rows=1, cols=3)
+                    tbl_prog.style = 'Light Grid Accent 3'
+                    hdr = tbl_prog.rows[0].cells
+                    hdr[0].text = "Date"
+                    hdr[1].text = "Heure"
+                    hdr[2].text = "Visiteur"
+                    for p in programmes:
+                        visiteur = p.idvst.idvstr
+                        row = tbl_prog.add_row().cells
+                        row[0].text = str(p.ddpvst)
+                        row[1].text = str(p.hdbt)
+                        row[2].text = f"{visiteur.tnm} {visiteur.tpm}"
+                    doc.add_paragraph("")  # mb-2
+
+        # === SECRETAIRES ===
+        if secretaires_ids:
+            doc.add_heading("Secrétaires", level=1)
+            secretaires = ClSecretaire.objects.select_related('directeur').filter(id__in=secretaires_ids)
             for s in secretaires:
-                row = table.add_row().cells
-                row[0].text = s.tnm or ""
-                row[1].text = s.tpm or ""
-                row[2].text = s.tsx or ""
-                row[3].text = s.teml or ""
-                row[4].text = s.tphne or ""
-                row[5].text = f"{s.directeur.tnm} {s.directeur.tpm}" if s.directeur else "Non assigné"
-        else:
-            doc.add_paragraph("Aucun secrétaire sélectionné.")
+                table = doc.add_table(rows=1, cols=2)
+                table.style = 'Table Grid'
+                fields = [
+                    ("Nom complet", f"{s.tnm} {s.tpm}"),
+                    ("Téléphone", s.tphne),
+                    ("Email", s.teml),
+                    ("Directeur", f"{s.directeur.tnm} {s.directeur.tpm}" if s.directeur else None)
+                ]
+                for label, value in fields:
+                    if value:
+                        row = table.add_row().cells
+                        row[0].text = label
+                        row[1].text = value
 
-        # Création de la réponse pour télécharger le fichier Word
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        )
-        response['Content-Disposition'] = 'attachment; filename=utilisateurs_selection.docx'
+                if s.directeur:
+                    visites_dir = ClVisite.objects.filter(iddirecteur=s.directeur)
+                    programmes = ClProgrammeVisite.objects.filter(idvst__in=visites_dir)
+
+                    if programmes.exists():
+                        doc.add_heading("Programmes Associés", level=3)
+                        tbl_prog = doc.add_table(rows=1, cols=3)
+                        tbl_prog.style = 'Light Grid Accent 4'
+                        hdr = tbl_prog.rows[0].cells
+                        hdr[0].text = "Date"
+                        hdr[1].text = "Heure"
+                        hdr[2].text = "Visiteur"
+                        for p in programmes:
+                            visiteur = p.idvst.idvstr
+                            row = tbl_prog.add_row().cells
+                            row[0].text = str(p.ddpvst)
+                            row[1].text = str(p.hdbt)
+                            row[2].text = f"{visiteur.tnm} {visiteur.tpm}"
+                        doc.add_paragraph("")  # mb-2
+        doc.add_paragraph()
+        date_para = doc.add_paragraph()
+        date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
+        run_date.bold = True
+        run_date.font.size = Pt(10)
+
+        for _ in range(3):
+            doc.add_paragraph()
+
+        ref_para = doc.add_paragraph()
+        ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+        ref_run.bold = True
+        ref_run.font.size = Pt(10)
+        # === Export Word ===
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        response['Content-Disposition'] = 'attachment; filename="acteurs_et_programmes.docx"'
         doc.save(response)
         return response
 
-    return JsonResponse({'error': 'Méthode non autorisée. Utilisez POST.'}, status=405)
+    return HttpResponse("Méthode non autorisée", status=405)

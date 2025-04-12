@@ -28,7 +28,7 @@
     <h2 class="text-center mb-4 text-white">Utilisateurs Répartis par Rôle</h2>
 
     <div class="text-end mb-3">
-        <button id="generate-word" class="btn btn-marine me-2" disabled>Générer Word</button>
+        <button id="export_word" class="btn btn-marine me-2" disabled>Générer Word</button>
     </div>
 
     <!-- Liste des Visiteurs -->
@@ -47,7 +47,7 @@
             <tbody>
                 {% for visiteur in visiteurs %}
                 <tr>
-                    <td><input type="checkbox" name="user_select[]" value="{{ visiteur.id }}" class="user-checkbox"></td>
+                    <td><input type="checkbox" value="{{ visiteur.id }}" class="user-checkbox" data-role="visiteurs"></td>
                     <td>{{ visiteur.tnm }}</td>
                     <td>{{ visiteur.tpm }}</td>
                     <td>{{ visiteur.teml }}</td>
@@ -76,7 +76,7 @@
             <tbody>
                 {% for directeur in directeurs %}
                 <tr>
-                    <td><input type="checkbox" name="user_select[]" value="{{ directeur.id }}" class="user-checkbox"></td>
+                    <td><input type="checkbox" value="{{ directeur.id }}" class="user-checkbox" data-role="directeurs"></td>
                     <td>{{ directeur.tnm }}</td>
                     <td>{{ directeur.tpm }}</td>
                     <td>{{ directeur.teml }}</td>
@@ -106,7 +106,7 @@
             <tbody>
                 {% for secretaire in secretaires %}
                 <tr>
-                    <td><input type="checkbox" name="user_select[]" value="{{ secretaire.id }}" class="user-checkbox"></td>
+                    <td><input type="checkbox" value="{{ secretaire.id }}" class="user-checkbox" data-role="secretaires"></td>
                     <td>{{ secretaire.tnm }}</td>
                     <td>{{ secretaire.tpm }}</td>
                     <td>{{ secretaire.teml }}</td>
@@ -121,54 +121,22 @@
     </div>
 </div>
 
-<!-- Modale de Bienvenue -->
-<div class="modal fade" id="autoModal" tabindex="-1" aria-labelledby="autoModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="autoModalLabel">Bienvenue</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
-      </div>
-      <div class="modal-body">
-        Bonjour ! Voici la liste des utilisateurs répartis par rôle.
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- JavaScript -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Affichage automatique de la modale
-        const myModal = new bootstrap.Modal(document.getElementById('autoModal'));
-        myModal.show();
-
-        // Activer/Désactiver le bouton Générer Word
         const checkboxes = document.querySelectorAll('.user-checkbox');
-        const generateBtn = document.getElementById('generate-word');
+        const generateBtn = document.getElementById('export_word');
 
         function updateButtonState() {
             const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
             generateBtn.disabled = !anyChecked;
         }
 
-        updateButtonState();
-
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateButtonState);
-        });
-
-        generateBtn.addEventListener('click', function () {
-            const selected = document.querySelectorAll('input[name="user_select[]"]:checked');
-            if (selected.length === 0) {
-                alert("Veuillez sélectionner au moins un utilisateur.");
-                return;
-            }
-
-            const url = "{% url 'secretaire:generate_word' %}";
+        function createForm(selectedCheckboxes) {
+            const url = "{% url 'export_word' %}";
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = url;
+            form.style.display = 'none';
 
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
@@ -176,16 +144,32 @@
             csrfInput.value = '{{ csrf_token }}';
             form.appendChild(csrfInput);
 
-            selected.forEach(cb => {
+            selectedCheckboxes.forEach(cb => {
                 const input = document.createElement('input');
                 input.type = 'hidden';
-                input.name = 'user_select[]';
+                input.name = cb.dataset.role;
                 input.value = cb.value;
                 form.appendChild(input);
             });
 
-            document.body.appendChild(form);
-            form.submit();
+            return form;
+        }
+
+        updateButtonState();  // Ensure the button starts in the correct state
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateButtonState);
+        });
+
+        generateBtn.addEventListener('click', function () {
+            const selected = document.querySelectorAll('.user-checkbox:checked');
+            if (selected.length > 0) {
+                const form = createForm(selected);
+
+                document.body.appendChild(form);
+                form.submit();
+                generateBtn.disabled = true; // Disable the button after submission
+            }
         });
     });
 </script>

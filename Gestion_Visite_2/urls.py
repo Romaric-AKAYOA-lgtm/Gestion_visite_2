@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
-from Gestion_Visite_2.views_2 import export_word, liste_utilisateurs, tatitistique_view
+from Gestion_Visite_2.views_2 import  generate_word, liste_utilisateurs, tatitistique_view
 from . import views
 
 urlpatterns = [
@@ -11,7 +11,7 @@ urlpatterns = [
     path("home", views.home_view, name='home'), 
      path("statistique", tatitistique_view, name='statistique'), 
     path('liste_utilisateurs/', liste_utilisateurs, name='liste_utilisateurs'),
-     path('export-word/',  export_word, name='export_word'),
+     path('export-word/',  generate_word, name='export_word'),
    #  path('', login_view, name='login'),
    path('visiteur/', include('visiteur.urls')),  # Inclure les URLs de l'application visiteur
     path('visite/', include('visite.urls')),  # Inclure les URLs de l'application visite

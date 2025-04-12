@@ -1,20 +1,21 @@
-from django.shortcuts import render
-import os
-from django.conf import settings
-# Create your views here.
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from django.conf import settings
+from django.db.models import Q
+
+from datetime import datetime
+import zipfile
+import io
+import os
+
+from docx import Document
+from docx.shared import Pt, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_TABLE_ALIGNMENT
 
 from connection.views import get_connected_user
 from .models import ClVisiteur
 from .forms import ClVisiteurForm
-from django.http import HttpResponse
-from docx import Document
-from docx.shared import Pt
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from datetime import datetime
-from django.db.models import Q  # Importer Q pour les filtres complexes
-import zipfile
-import io
 
 # Affiche la liste des visiteurs
 def visiteur_list(request):
@@ -84,143 +85,197 @@ def visiteur_search(request):
     query = request.GET.get('q', '')
     visiteurs = ClVisiteur.objects.filter(tnm__icontains=query)  # Exemple de filtre par nom
     return render(request, 'visiteur/visiteur_list.html', {  'username':username,'visiteurs': visiteurs, 'query': query})
-
 def visiter_search(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
-    # Récupérer la valeur de recherche dans la requête GET, retirer les espaces inutiles autour
-    query = request.GET.get('q', '').strip()  # 'q' est le paramètre de recherche dans l'URL
+    query = request.GET.get('q', '').strip()
 
-    # Initialiser la queryset avec tous les visiteurs
-    visiteurs = ClVisiteur.objects.all()  # Utilisation du modèle hérité
+    # Debugging: afficher la requête
+    print(f"Recherche pour : {query}")
 
-    # Si un critère de recherche est spécifié, appliquer le filtre
+    visiteurs = ClVisiteur.objects.all()
+
     if query:
         visiteurs = visiteurs.filter(
-            Q(tnm__icontains=query) |  # Recherche dans le champ 'tnm' (Nom)
-            Q(tpm__icontains=query) |  # Recherche dans le champ 'tpm' (Prénom)
-            Q(tsx__icontains=query) |  # Recherche dans le champ 'tsx' (Sexe)
-            Q(ttvst__icontains=query)  # Recherche dans le champ 'ttvst' (Visiteur)
+            Q(tnm__icontains=query) |
+            Q(tpm__icontains=query) |
+            Q(tsx__icontains=query) |
+            Q(ttvst__icontains=query)
         )
+        # Debugging: afficher le nombre de résultats
+        print(f"Nombre de visiteurs trouvés : {visiteurs.count()}")
 
-    # Retourner la page de liste des visiteurs avec les résultats de la recherche
-    return render(request, 'visiteur/visiteur_list.html', {  'username':username,'visiteurs': visiteurs, 'query': query})
+    return render(request, 'visiteur/visiteur_list.html', { 
+        'username': username, 
+        'visiteurs': visiteurs, 
+        'query': query
+    })
 
 def visiteur_impression(request):
     username = get_connected_user(request)
-
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
     visiteurs = ClVisiteur.objects.all()
     doc = Document()
-    doc.add_heading('Liste des Visiteurs', 0)
+    titre = doc.add_heading('Liste des Visiteurs', 0)
+    titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     for visiteur in visiteurs:
-        table = doc.add_table(rows=1, cols=2)
-        table.style = 'Table Grid'
-
-        cell1 = table.cell(0, 0)
-        cell2 = table.cell(0, 1)
-        cell1.width = Pt(300)
-        cell2.width = Pt(100)
-
-        cell1.paragraphs[0].add_run(f"Nom: {visiteur.tnm} {visiteur.tpm}")
-        cell1.paragraphs[0].add_run(f"\nEmail: {visiteur.teml}")
-        cell1.paragraphs[0].add_run(f"\nNuméro de téléphone: {visiteur.tphne}")
-        cell1.paragraphs[0].add_run(f"\nAdresse: {visiteur.tads}")
-        cell1.paragraphs[0].add_run(f"\nType de visiteur: {visiteur.ttvst}")
-        cell1.paragraphs[0].add_run(f"\nStatut: {visiteur.tstt}")
-
-        # Image dans MEDIA_ROOT
+        # Ajout de l'image en haut et centrée
         try:
             if visiteur.img and os.path.exists(visiteur.img.path):
                 img_path = visiteur.img.path
             else:
-                img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280_apFMjrC.png')
+                img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280.png')
 
             if os.path.exists(img_path):
-                cell2.paragraphs[0].clear()
-                cell2.paragraphs[0].add_run().add_picture(img_path, width=Pt(80), height=Pt(100))
-                cell2.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                para_img = doc.add_paragraph()
+                para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_img = para_img.add_run()
+                run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
         except Exception as e:
-            print(f"Erreur chargement image : {e}")
+            print(f"Erreur image pour {visiteur.tnm} {visiteur.tpm} : {e}")
+
+        table = doc.add_table(rows=10, cols=2)
+        table.style = 'Table Grid'
+        table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+        champs = [
+            ("Nom", f"{visiteur.tnm or ''} {visiteur.tpm or ''}"),
+            ("Sexe", visiteur.tsx or ''),
+            ("Date de naissance", str(visiteur.dns or '')),
+            ("Lieu de naissance", visiteur.tlns or ''),
+            ("Adresse", visiteur.tads or ''),
+            ("Email", visiteur.teml or ''),
+            ("Téléphone", visiteur.tphne or ''),
+            ("Date début", str(visiteur.dsb or '')),
+            ("Date fin", str(visiteur.ddf or '')),
+            ("Statut", visiteur.tstt or ''),
+        ]
+
+        for i, (label, valeur) in enumerate(champs):
+            table.cell(i, 0).text = f"{label} :"
+            table.cell(i, 1).text = str(valeur)
 
         doc.add_paragraph()
+        date_para = doc.add_paragraph()
+        date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
+        run_date.bold = True
+        run_date.font.size = Pt(10)
 
-    footer_paragraph = doc.add_paragraph()
-    footer_paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    footer_paragraph.add_run(f"Brazzaville - {datetime.now().strftime('%Y-%m-%d')}").font.size = Pt(8)
+        for _ in range(3):
+            doc.add_paragraph()
+
+        ref_para = doc.add_paragraph()
+        ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+        ref_run.bold = True
+        ref_run.font.size = Pt(10)
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-    response['Content-Disposition'] = 'attachment; filename="visiteur.docx"'
+    response['Content-Disposition'] = 'attachment; filename="visiteurs.docx"'
     doc.save(response)
     return response
 
-
 def generate_word(request):
-    username = get_connected_user(request)
-
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
+    username = get_connected_user(request)  # Supposons que cette fonction existe et retourne l'utilisateur connecté
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')  # Redirige si l'utilisateur n'est pas connecté
 
-    visiteur_ids = request.POST.getlist('visiteur_select[]')
+    # Récupérer les IDs des visiteurs sélectionnés depuis le formulaire POST
+    visiteur_ids = request.POST.getlist('visiteur_select')  # Utilisez `getlist` pour récupérer une liste de valeurs
     if not visiteur_ids:
-        return HttpResponse("Aucun visiteur sélectionné", status=400)
+        return HttpResponse("Aucun visiteur sélectionné", status=400)  # Message d'erreur si aucun visiteur n'est sélectionné
 
+    # Créer un fichier ZIP en mémoire
     zip_buffer = io.BytesIO()
 
+    # Créer un fichier ZIP pour y ajouter les fichiers Word
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for visiteur_id in visiteur_ids:
             try:
                 visiteur = ClVisiteur.objects.get(id=visiteur_id)
             except ClVisiteur.DoesNotExist:
-                continue
+                continue  # Si le visiteur n'existe pas, on passe au suivant
 
+            # Création du document Word pour chaque visiteur
             doc = Document()
-            doc.add_heading("Fiche du Visiteur", level=1)
-            table = doc.add_table(rows=1, cols=2)
-            table.style = 'Table Grid'
+            titre = doc.add_heading("Fiche du Visiteur", 0)
+            titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            cell1 = table.cell(0, 0)
-            cell2 = table.cell(0, 1)
-            cell1.width = Pt(300)
-            cell2.width = Pt(100)
-
-            cell1.paragraphs[0].add_run(f"Nom : {visiteur.tnm} {visiteur.tpm}")
-            cell1.paragraphs[0].add_run(f"\nSexe : {visiteur.tsx}")
-            cell1.paragraphs[0].add_run(f"\nTéléphone : {visiteur.tphne}")
-            cell1.paragraphs[0].add_run(f"\nEmail : {visiteur.teml}")
-            cell1.paragraphs[0].add_run(f"\nDate de naissance : {visiteur.dns}")
-            cell1.paragraphs[0].add_run(f"\nStatut : {visiteur.tstt}")
-
-            # Image à droite
+            # Ajout image
             try:
                 if visiteur.img and os.path.exists(visiteur.img.path):
                     img_path = visiteur.img.path
                 else:
-                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280_apFMjrC.png')
+                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280.png')
 
                 if os.path.exists(img_path):
-                    cell2.paragraphs[0].clear()
-                    cell2.paragraphs[0].add_run().add_picture(img_path, width=Pt(80), height=Pt(100))
-                    cell2.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                    para_img = doc.add_paragraph()
+                    para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    run_img = para_img.add_run()
+                    run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
             except Exception as e:
-                print(f"Erreur image pour {visiteur.tnm} {visiteur.tpm} : {e}")
+                print(f"Erreur chargement image : {e}")
 
+            # Création du tableau avec les informations du visiteur
+            table = doc.add_table(rows=10, cols=2)
+            table.style = 'Table Grid'
+            table.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+            champs = [
+                ("Nom", f"{visiteur.tnm or ''} {visiteur.tpm or ''}"),
+                ("Sexe", visiteur.tsx or ''),
+                ("Date de naissance", str(visiteur.dns or '')),
+                ("Lieu de naissance", visiteur.tlns or ''),
+                ("Adresse", visiteur.tads or ''),
+                ("Email", visiteur.teml or ''),
+                ("Téléphone", visiteur.tphne or ''),
+                ("Date début", str(visiteur.dsb or '')),
+                ("Date fin", str(visiteur.ddf or '')),
+                ("Statut", visiteur.tstt or ''),
+            ]
+
+            for i, (label, valeur) in enumerate(champs):
+                table.cell(i, 0).text = f"{label} :"
+                table.cell(i, 1).text = str(valeur)
+
+            # Date et utilisateur qui a généré le document
+            doc.add_paragraph()
+            date_para = doc.add_paragraph()
+            date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
+            run_date.bold = True
+            run_date.font.size = Pt(10)
+
+            for _ in range(3):
+                doc.add_paragraph()
+
+            ref_para = doc.add_paragraph()
+            ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+            ref_run.bold = True
+            ref_run.font.size = Pt(10)
+
+            # Sauvegarde du document Word dans un buffer mémoire
             word_buffer = io.BytesIO()
             doc.save(word_buffer)
             word_buffer.seek(0)
-            filename = f"Visiteur_{visiteur.tnm}_{visiteur.tpm}.docx"
-            zip_file.writestr(filename, word_buffer.read())
 
+            # Nom du fichier Word
+            filename = f"Visiteur_{visiteur.tnm}_{visiteur.tpm}.docx"
+            zip_file.writestr(filename, word_buffer.read())  # Ajoute le fichier Word au ZIP
+
+    # Réinitialisation du buffer du ZIP pour l'envoyer
     zip_buffer.seek(0)
+
+    # Réponse HTTP avec le fichier ZIP contenant les documents Word
     response = HttpResponse(zip_buffer, content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename=visiteurs.zip'
+    response['Content-Disposition'] = 'attachment; filename="visiteurs.zip"'
+
     return response

@@ -40,28 +40,29 @@
             <a href="{% url 'visiteur:visiteur_impression' %}" class="btn btn-secondary me-2">
                 <i class="bi bi-printer"></i> Imprimer
             </a>
-            <!-- Bouton pour générer les fichiers Word -->
-            <button type="button" id="generate-word" class="btn btn-primary" disabled>
-                Générer le(s) fichier(s) Word
-            </button>
+                    <!-- Bouton de soumission à l'intérieur du formulaire -->
+                <button type="submit" class="btn btn-primary" id="generate-word" disabled>
+                    Générer le(s) fichier(s) Word
+                </button>
         </div>
 
         <!-- Formulaire de recherche -->
         <form method="GET" action="{% url 'visiteur:visiteur_search' %}" class="d-flex justify-content-end w-50" id="search-form">
             <div class="col-auto">
+                <label for="search-input" class="visually-hidden">Rechercher un visiteur</label>
                 <input type="text" name="q" class="form-control search-input" placeholder="Rechercher par nom, prénom, sexe, téléphone..." value="{{ query }}" id="search-input">
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-marine" id="reset-search">Rechercher</button>
+                <button type="submit" class="btn btn-marine" id="">Rechercher</button>
             </div>
         </form>
     </div>
 
     <!-- Liste des visiteurs -->
-    <form id="visiteur-form">
+    <form id="visiteur-form" method="POST" action="{% url 'visiteur:generate_word' %}">
         {% csrf_token %}
         <div class="table-responsive" id="visitors-table">
-            <table class="table table-hover text-center bg-white">
+            <table class="table table-hover table-bordered text-center bg-white">
                 <thead class="table-dark">
                     <tr>
                         <th>#</th>
@@ -78,7 +79,9 @@
                 <tbody>
                     {% for visiteur in visiteurs %}
                         <tr>
-                            <td><input type="checkbox" name="visiteur_select[]" value="{{ visiteur.id }}" class="visiteur-checkbox"></td>
+                            <td>
+                                <input type="checkbox" name="visiteur_select" value="{{ visiteur.id }}" class="visiteur-checkbox">
+                            </td>
                             <td>{{ visiteur.tnm }}</td>
                             <td>{{ visiteur.tpm }}</td>
                             <td>{{ visiteur.tsx }}</td>
@@ -114,34 +117,29 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search-input');
     const resetSearchButton = document.getElementById('reset-search');
 
-    // Fonction pour mettre à jour l'état du bouton en fonction des cases cochées
+    // Fonction pour activer/désactiver le bouton
     function updateButtonState() {
-        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);  // Vérifie si au moins une case est cochée
-        generateBtn.disabled = !anyChecked;  // Active/désactive le bouton
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        generateBtn.disabled = !anyChecked;
     }
 
-    // Initialiser l'état du bouton dès le chargement de la page
     updateButtonState();
 
-    // Ajouter l'écouteur d'événement pour chaque case à cocher
     checkboxes.forEach(cb => {
         cb.addEventListener('change', updateButtonState);
     });
-    
-    // Réinitialiser le champ de recherche après soumission
+
+    // Soumission personnalisée du formulaire de recherche
     searchForm.addEventListener('submit', function (event) {
         event.preventDefault();
-        
-        // Soumettre le formulaire avec les valeurs actuelles de recherche
-        window.location.href = searchForm.action + "?q=" + searchInput.value;
+        const query = encodeURIComponent(searchInput.value);
+        window.location.href = searchForm.action + "?q=" + query;
     });
 
-    // Réinitialiser le champ de recherche
-    resetSearchButton.addEventListener('click', function() {
+    resetSearchButton.addEventListener('click', function () {
         searchInput.value = '';
         searchForm.submit();
     });
 });
 </script>
-
 {% endblock %}
