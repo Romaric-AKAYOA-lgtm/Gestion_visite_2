@@ -55,6 +55,7 @@ def logout_view(request):
     logout(request)  # Supprimer toutes les données de session
     messages.info(request, "Vous avez été déconnecté avec succès.")
     return redirect("connection:login")  # Rediriger vers la page de connexion
+from datetime import date
 
 # Vue de connexion (Login)
 def login_view(request):
@@ -66,25 +67,33 @@ def login_view(request):
             username = form.cleaned_data['username']
             password = form.cleaned_data['password']
 
-            # 🔹 D'abord, essayer avec Django superuser
+            # 🔹 Essayer avec Django superuser
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
                 messages.success(request, "Connexion superutilisateur réussie.")
-                return redirect('home')  # Rediriger vers la page d'accueil
+                return redirect('home')
 
-            # 🔹 Ensuite, essayer avec modèle personnalisé ClConnection
+            # 🔹 Sinon, essayer avec ClConnection
             try:
-                # Vérifier si l'utilisateur existe dans ClConnection
                 user_obj = ClConnection.objects.get(username=username)
 
-                # Vérification du mot de passe
+                # 🔹 Vérifier si le mot de passe est correct
                 if check_password(password, user_obj.password):
-                    # Connexion via ClConnection : Sauvegarder le username et le password dans la session
+
+                    # 🔹 Récupérer l'utilisateur lié (ClUser)
+                    cl_user = user_obj.user
+
+                    # 🔹 Vérification de retraite
+                    if cl_user.date_retraite and date.today() >= cl_user.date_retraite:
+                        messages.error(request, "Accès refusé : Vous êtes à la retraite.")
+                        return redirect('connection:login')
+
+                    # 🔹 Connexion réussie
                     request.session['username'] = user_obj.username
-                    request.session['password'] = password  # On stocke le mot de passe sans le hacher ici
+                    request.session['password'] = password
                     messages.success(request, "Connexion utilisateur ClConnection réussie.")
-                    return redirect('home')  # Redirection vers la page d'accueil
+                    return redirect('home')
                 else:
                     messages.error(request, "Mot de passe incorrect pour l'utilisateur ClConnection.")
             except ClConnection.DoesNotExist:
@@ -95,7 +104,6 @@ def login_view(request):
         form = LoginForm()
 
     return render(request, 'connection/login.html', {'form': form})
-
 
 def manage_connection(request):
     """Vue pour gérer les informations de connexion de l'utilisateur."""

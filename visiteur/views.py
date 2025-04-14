@@ -182,48 +182,58 @@ def visiteur_impression(request):
     doc.save(response)
     return response
 
+import io
+import zipfile
+from datetime import datetime
+import requests
+from django.http import HttpResponse
+from django.shortcuts import redirect
+from django.conf import settings
+from docx import Document
+from docx.shared import Inches, Pt
+
 def generate_word(request):
-    username = get_connected_user(request)  # Supposons que cette fonction existe et retourne l'utilisateur connecté
+    username = get_connected_user(request)
     if not username:
-        return redirect('login')  # Redirige si l'utilisateur n'est pas connecté
+        return redirect('login')
 
-    # Récupérer les IDs des visiteurs sélectionnés depuis le formulaire POST
-    visiteur_ids = request.POST.getlist('visiteur_select')  # Utilisez `getlist` pour récupérer une liste de valeurs
+    visiteur_ids = request.POST.getlist('visiteur_select[]')
     if not visiteur_ids:
-        return HttpResponse("Aucun visiteur sélectionné", status=400)  # Message d'erreur si aucun visiteur n'est sélectionné
+        return HttpResponse("Aucun visiteur sélectionné", status=400)
 
-    # Créer un fichier ZIP en mémoire
     zip_buffer = io.BytesIO()
 
-    # Créer un fichier ZIP pour y ajouter les fichiers Word
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for visiteur_id in visiteur_ids:
             try:
                 visiteur = ClVisiteur.objects.get(id=visiteur_id)
             except ClVisiteur.DoesNotExist:
-                continue  # Si le visiteur n'existe pas, on passe au suivant
+                continue
 
-            # Création du document Word pour chaque visiteur
             doc = Document()
             titre = doc.add_heading("Fiche du Visiteur", 0)
             titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            # Ajout image
+            # 📸 Ajout de l'image (téléchargée depuis l'URL)
             try:
-                if visiteur.img and os.path.exists(visiteur.img.path):
-                    img_path = visiteur.img.path
+                if visiteur.img and visiteur.img.url:
+                    image_url = request.build_absolute_uri(visiteur.img.url)
                 else:
-                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280.png')
+                    image_url = request.build_absolute_uri(settings.MEDIA_URL + 'user_images/person-1824147_1280.png')
 
-                if os.path.exists(img_path):
+                response = requests.get(image_url)
+                if response.status_code == 200:
+                    temp_image = io.BytesIO(response.content)
                     para_img = doc.add_paragraph()
                     para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     run_img = para_img.add_run()
-                    run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
+                    run_img.add_picture(temp_image, width=Inches(1.0), height=Inches(1.25))
+                else:
+                    print(f"⚠️ Échec du téléchargement de l'image : {image_url}")
             except Exception as e:
-                print(f"Erreur chargement image : {e}")
+                print(f"❌ Erreur lors du téléchargement de l'image : {e}")
 
-            # Création du tableau avec les informations du visiteur
+            # 📋 Tableau des informations
             table = doc.add_table(rows=10, cols=2)
             table.style = 'Table Grid'
             table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -231,13 +241,13 @@ def generate_word(request):
             champs = [
                 ("Nom", f"{visiteur.tnm or ''} {visiteur.tpm or ''}"),
                 ("Sexe", visiteur.tsx or ''),
-                ("Date de naissance", str(visiteur.dns or '')),
+                ("Date de naissance", visiteur.dns.strftime('%d/%m/%Y') if visiteur.dns else ''),
                 ("Lieu de naissance", visiteur.tlns or ''),
                 ("Adresse", visiteur.tads or ''),
                 ("Email", visiteur.teml or ''),
                 ("Téléphone", visiteur.tphne or ''),
-                ("Date début", str(visiteur.dsb or '')),
-                ("Date fin", str(visiteur.ddf or '')),
+                ("Date début", visiteur.dsb.strftime('%d/%m/%Y') if visiteur.dsb else ''),
+                ("Date fin", visiteur.ddf.strftime('%d/%m/%Y') if visiteur.ddf else ''),
                 ("Statut", visiteur.tstt or ''),
             ]
 
@@ -245,7 +255,7 @@ def generate_word(request):
                 table.cell(i, 0).text = f"{label} :"
                 table.cell(i, 1).text = str(valeur)
 
-            # Date et utilisateur qui a généré le document
+            # 🕘 Date + Signature
             doc.add_paragraph()
             date_para = doc.add_paragraph()
             date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -258,24 +268,22 @@ def generate_word(request):
 
             ref_para = doc.add_paragraph()
             ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-            ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+            try:
+                ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+            except Exception:
+                ref_run = ref_para.add_run("Utilisateur inconnu")
             ref_run.bold = True
             ref_run.font.size = Pt(10)
 
-            # Sauvegarde du document Word dans un buffer mémoire
+            # 💾 Enregistrement du Word
             word_buffer = io.BytesIO()
             doc.save(word_buffer)
             word_buffer.seek(0)
 
-            # Nom du fichier Word
-            filename = f"Visiteur_{visiteur.tnm}_{visiteur.tpm}.docx"
-            zip_file.writestr(filename, word_buffer.read())  # Ajoute le fichier Word au ZIP
+            nom_fichier = f"Visiteur_{visiteur.tnm}_{visiteur.tpm}.docx"
+            zip_file.writestr(nom_fichier, word_buffer.read())
 
-    # Réinitialisation du buffer du ZIP pour l'envoyer
     zip_buffer.seek(0)
-
-    # Réponse HTTP avec le fichier ZIP contenant les documents Word
     response = HttpResponse(zip_buffer, content_type='application/zip')
-    response['Content-Disposition'] = 'attachment; filename="visiteurs.zip"'
-
+    response['Content-Disposition'] = 'attachment; filename=visiteurs.zip'
     return response

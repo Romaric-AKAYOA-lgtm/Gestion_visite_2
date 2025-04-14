@@ -1,6 +1,7 @@
 {% extends 'template_base.html' %}
 
 {% block contenue %}
+
 <style>
     .btn-marine {
         background-color: #003366;
@@ -18,10 +19,6 @@
         max-width: 300px;
     }
 
-    .table th, .table td {
-        vertical-align: middle;
-    }
-
     .visiteur-checkbox {
         width: 20px;
         height: 20px;
@@ -31,36 +28,33 @@
 <div class="container-fluid mt-5">
     <h2 class="text-center mb-4 text-white">Liste des Visiteurs</h2>
 
-    <!-- Formulaire de recherche et boutons -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="col-auto">
-            <a href="{% url 'visiteur:visiteur_create' %}" class="btn btn-marine me-2">
-                <i class="bi bi-person-plus"></i> Créer un nouveau visiteur
-            </a>
-            <a href="{% url 'visiteur:visiteur_impression' %}" class="btn btn-secondary me-2">
-                <i class="bi bi-printer"></i> Imprimer
-            </a>
-                    <!-- Bouton de soumission à l'intérieur du formulaire -->
-                <button type="submit" class="btn btn-primary" id="generate-word" disabled>
-                    Générer le(s) fichier(s) Word
-                </button>
-        </div>
-
-        <!-- Formulaire de recherche -->
-        <form method="GET" action="{% url 'visiteur:visiteur_search' %}" class="d-flex justify-content-end w-50" id="search-form">
-            <div class="col-auto">
-                <label for="search-input" class="visually-hidden">Rechercher un visiteur</label>
-                <input type="text" name="q" class="form-control search-input" placeholder="Rechercher par nom, prénom, sexe, téléphone..." value="{{ query }}" id="search-input">
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-marine" id="">Rechercher</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Liste des visiteurs -->
+    <!-- Début du formulaire de sélection -->
     <form id="visiteur-form" method="POST" action="{% url 'visiteur:generate_word' %}">
         {% csrf_token %}
+        <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
+
+        <!-- Formulaire de recherche et boutons -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'visiteur:visiteur_create' %}" class="btn btn-marine">
+                    <i class="bi bi-person-plus"></i> Créer un nouveau visiteur
+                </a>
+                <a href="{% url 'visiteur:visiteur_impression' %}" class="btn btn-secondary">
+                    <i class="bi bi-printer"></i> Imprimer
+                </a>
+                <button type="submit" class="btn btn-success">
+                    Traiter la sélection
+                </button>
+            </div>
+
+            <!-- Formulaire de recherche côte à côte -->
+            <div class="d-flex align-items-center gap-2">
+                <input type="text" name="q" class="form-control search-input" placeholder="Rechercher par nom, prénom, sexe, téléphone..." value="{{ query }}" id="search-input">
+                <button formaction="{% url 'visiteur:visiteur_search' %}" formmethod="GET" class="btn btn-marine">Rechercher</button>
+            </div>
+        </div>
+
+        <!-- Tableau -->
         <div class="table-responsive" id="visitors-table">
             <table class="table table-hover table-bordered text-center bg-white">
                 <thead class="table-dark">
@@ -80,7 +74,7 @@
                     {% for visiteur in visiteurs %}
                         <tr>
                             <td>
-                                <input type="checkbox" name="visiteur_select" value="{{ visiteur.id }}" class="visiteur-checkbox">
+                                <input type="checkbox" name="visiteur_select[]" value="{{ visiteur.id }}" class="visiteur-checkbox">
                             </td>
                             <td>{{ visiteur.tnm }}</td>
                             <td>{{ visiteur.tpm }}</td>
@@ -110,36 +104,21 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const checkboxes = document.querySelectorAll('.visiteur-checkbox');
-    const generateBtn = document.getElementById('generate-word');
-    const searchForm = document.getElementById('search-form');
-    const searchInput = document.getElementById('search-input');
-    const resetSearchButton = document.getElementById('reset-search');
+    document.getElementById('visiteur-form').addEventListener('submit', function(e) {
+        const form = this;
+        const selected = document.querySelectorAll('.visiteur-checkbox:checked');
 
-    // Fonction pour activer/désactiver le bouton
-    function updateButtonState() {
-        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-        generateBtn.disabled = !anyChecked;
-    }
+        // Nettoyage des anciens champs cachés
+        form.querySelectorAll('input[type="hidden"][name="visiteur_select[]"]').forEach(el => el.remove());
 
-    updateButtonState();
-
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateButtonState);
+        selected.forEach(cb => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'visiteur_select[]';
+            hiddenInput.value = cb.value;
+            form.appendChild(hiddenInput);
+        });
     });
-
-    // Soumission personnalisée du formulaire de recherche
-    searchForm.addEventListener('submit', function (event) {
-        event.preventDefault();
-        const query = encodeURIComponent(searchInput.value);
-        window.location.href = searchForm.action + "?q=" + query;
-    });
-
-    resetSearchButton.addEventListener('click', function () {
-        searchInput.value = '';
-        searchForm.submit();
-    });
-});
 </script>
+
 {% endblock %}

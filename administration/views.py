@@ -72,7 +72,7 @@ def administration_modify(request, id):
         form = AdministrationForm(request.POST, request.FILES, instance=administration)
         if form.is_valid():
             form.save()
-            return redirect('administration:detail')  # Rediriger vers la page de détail après modification
+            return redirect('administration:list')# Rediriger vers la page de détail après modification
     else:
         form = AdministrationForm(instance=administration)
 

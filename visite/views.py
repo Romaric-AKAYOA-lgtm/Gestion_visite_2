@@ -133,7 +133,7 @@ def visite_search(request):
     ttvst = request.GET.get('ttvst', '')
     
     # Filtrage des visites
-    visites = ClVisite.objects.all()
+    visites = ClVisite.objects.all().order_by('-ddvst')
 
     # Appliquer les filtres en fonction des champs remplis
     if query:
@@ -182,7 +182,7 @@ def visite_impression(request):
     section.page_height = new_height
 
     doc.add_heading('Liste des Visites', 0)
-    table = doc.add_table(rows=1, cols=9)
+    table = doc.add_table(rows=1, cols=10)
     table.style = 'Table Grid'
 
     hdr_cells = table.rows[0].cells
@@ -193,19 +193,21 @@ def visite_impression(request):
     hdr_cells[4].text = 'Objet'
     hdr_cells[5].text = 'Type de Visiteur'
     hdr_cells[6].text = 'Date Visite'
-    hdr_cells[7].text = 'Statut'
-    hdr_cells[8].text = 'Motif'
+    hdr_cells[7].text = 'Heure Visite'
+    hdr_cells[8].text = 'Statut'
+    hdr_cells[9].text = 'Motif'
 
     for visite in visites:
         row_cells = table.add_row().cells
         row_cells[0].text = str(visite.id)
         row_cells[1].text = visite.idvstr.tnm
         row_cells[2].text = visite.idvstr.tpm
-        row_cells[3].text = f"{visite.iddirecteur.tnm} {visite.iddirecteur.tpm}"
+        row_cells[3].text = f"{visite.iddirecteur.tnm} {visite.iddirecteur.tpm}"  
         row_cells[4].text = visite.tobjt
         row_cells[5].text = visite.ttvst
         row_cells[6].text = visite.ddvst.strftime('%d/%m/%Y')
-        row_cells[7].text = visite.tsttvst
+        row_cells[7].text = str(visite.hvst)               
+        row_cells[8].text = visite.tsttvst
         row_cells[8].text = visite.tmtf if visite.tmtf else 'N/A'
 
     doc.add_paragraph()
@@ -253,7 +255,7 @@ def generate_word(request):
         section.page_height = new_height
 
         doc.add_heading("Liste des Visites", 0)
-        table = doc.add_table(rows=1, cols=9)
+        table = doc.add_table(rows=1, cols=10)
         table.style = 'Table Grid'
 
         hdr_cells = table.rows[0].cells
@@ -264,8 +266,9 @@ def generate_word(request):
         hdr_cells[4].text = 'Objet'
         hdr_cells[5].text = 'Type de Visiteur'
         hdr_cells[6].text = 'Date Visite'
-        hdr_cells[7].text = 'Statut'
-        hdr_cells[8].text = 'Motif'
+        hdr_cells[7].text = 'Heure Visite'
+        hdr_cells[8].text = 'Statut'
+        hdr_cells[9].text = 'Motif'
 
         for visite in visites:
             row_cells = table.add_row().cells
@@ -276,7 +279,8 @@ def generate_word(request):
             row_cells[4].text = visite.tobjt
             row_cells[5].text = visite.ttvst
             row_cells[6].text = visite.ddvst.strftime('%d/%m/%Y')
-            row_cells[7].text = visite.tsttvst
+            row_cells[7].text = str(visite.hvst)    
+            row_cells[8].text = visite.tsttvst
             row_cells[8].text = visite.tmtf if visite.tmtf else 'N/A'
 
         doc.add_paragraph()

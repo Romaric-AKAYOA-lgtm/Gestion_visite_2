@@ -345,24 +345,6 @@
 
   <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
   <script>
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      const mainWrapper = document.getElementById('main-wrapper');
-      sidebar.classList.toggle('show');
-      mainWrapper.classList.toggle('sidebar-visible');
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      const currentPath = window.location.pathname;
-      const links = document.querySelectorAll('.nav-link');
-
-      links.forEach(link => {
-        const linkPath = new URL(link.href).pathname;
-        if (currentPath === linkPath || currentPath.startsWith(linkPath)) {
-          link.classList.add('active');
-        }
-      });
-    });
   </script>
 </body>
 </html>

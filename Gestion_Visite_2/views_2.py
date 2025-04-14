@@ -121,8 +121,8 @@ def liste_utilisateurs(request):
     if not username:
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
-    visiteurs = ClVisiteur.objects.all()
-    directeurs = ClDirecteur.objects.all()
+    visiteurs = ClVisiteur.objects.all().order_by('tnm')
+    directeurs = ClDirecteur.objects.all().order_by('tnm')
     secretaires = ClSecretaire.objects.select_related('directeur').all()
     return render(request, 'liste_utilisateurs.html', {
         'visiteurs': visiteurs,
@@ -172,7 +172,7 @@ def generate_word(request):
                 doc.add_paragraph("")
 
                 # Programmes Confirmés
-                confirmes = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='confirmé')
+                confirmes = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites, tsttpvst='confirmé')
                 if confirmes.exists():
                     doc.add_heading("Programmes Confirmés", level=3)
                     tbl_conf = doc.add_table(rows=1, cols=3)
@@ -190,7 +190,7 @@ def generate_word(request):
                     doc.add_paragraph("")  # mb-2
 
                 # Programmes Annulés
-                annules = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='annulé')
+                annules = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites, tsttpvst='annulé')
                 if annules.exists():
                     doc.add_heading("Programmes Annulés", level=3)
                     tbl_annul = doc.add_table(rows=1, cols=3)
@@ -225,7 +225,7 @@ def generate_word(request):
                         row[1].text = value
 
                 visites_dir = ClVisite.objects.filter(iddirecteur=d)
-                programmes = ClProgrammeVisite.objects.filter(idvst__in=visites_dir)
+                programmes = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites_dir)
 
                 if programmes.exists():
                     doc.add_heading("Programmes Associés", level=3)

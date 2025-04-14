@@ -212,7 +212,7 @@ def directeur_impression(request):
     response['Content-Disposition'] = 'attachment; filename="directeurs.docx"'
     doc.save(response)
     return response
-
+import requests  # pour télécharger l'image depuis l'URL
 
 def generate_word(request):
     username = get_connected_user(request)
@@ -236,21 +236,27 @@ def generate_word(request):
             titre = doc.add_heading("Fiche du Directeur", 0)
             titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-            # Ajout de l'image en haut et centrée
+            # 📸 Ajout de l'image (téléchargée depuis l'URL)
             try:
-                if directeur.img and os.path.exists(directeur.img.path):
-                    img_path = directeur.img.path
+                if directeur.img and directeur.img.url:
+                    image_url = request.build_absolute_uri(directeur.img.url)
                 else:
-                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280_apFMjrC.png')
+                    image_url = request.build_absolute_uri(settings.MEDIA_URL + 'user_images/person-1824147_1280_apFMjrC.png')
 
-                if os.path.exists(img_path):
+                # Télécharger l'image depuis l'URL
+                response = requests.get(image_url)
+                if response.status_code == 200:
+                    temp_image = io.BytesIO(response.content)
                     para_img = doc.add_paragraph()
                     para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     run_img = para_img.add_run()
-                    run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
+                    run_img.add_picture(temp_image, width=Inches(1.0), height=Inches(1.25))
+                else:
+                    print(f"⚠️ Échec du téléchargement de l'image : {image_url}")
             except Exception as e:
-                print(f"Erreur image pour {directeur.tnm} {directeur.tpm} : {e}")
+                print(f"❌ Erreur lors du téléchargement de l'image : {e}")
 
+            # 📋 Tableau des informations
             table = doc.add_table(rows=10, cols=2)
             table.style = 'Table Grid'
             table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -272,6 +278,7 @@ def generate_word(request):
                 table.cell(i, 0).text = f"{label} :"
                 table.cell(i, 1).text = str(valeur)
 
+            # 🕘 Date + Signature
             doc.add_paragraph()
             date_para = doc.add_paragraph()
             date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -288,6 +295,7 @@ def generate_word(request):
             ref_run.bold = True
             ref_run.font.size = Pt(10)
 
+            # 💾 Enregistrement du Word
             word_buffer = io.BytesIO()
             doc.save(word_buffer)
             word_buffer.seek(0)

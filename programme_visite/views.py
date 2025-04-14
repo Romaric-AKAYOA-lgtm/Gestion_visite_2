@@ -39,7 +39,7 @@ def programme_visite_list(request):
     if not username:
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
-    programmes = ClProgrammeVisite.objects.all()  # Récupérer tous les programmes de visite
+    programmes = ClProgrammeVisite.objects.all().order_by('-ddpvst ')  # Récupérer tous les programmes de visite
     return render(request, 'programme_visite/programme_visite_list.html', {  'username':username,'programmes': programmes})
 
 # Vue pour afficher les détails d'un programme de visite
@@ -112,7 +112,7 @@ def programme_visite_list(request):
             Q(motif__icontains=query)  # Recherche dans le motif
         )
     else:
-        programmes = ClProgrammeVisite.objects.all()
+        programmes = ClProgrammeVisite.objects.all().order_by('-ddpvst') 
 
     return render(request, 'programme_visite/programme_visite_list.html', {  'username':username,'programmes': programmes, 'query': query})
 
@@ -243,7 +243,7 @@ def imprimer_liste_programmes_visites(request):
     annee = today.year
 
     # Filtrer les programmes du mois en cours
-    programmes = ClProgrammeVisite.objects.filter(ddpvst__month=mois, ddpvst__year=annee)
+    programmes = ClProgrammeVisite.objects.order_by('-ddpvst'). filter(ddpvst__month=mois, ddpvst__year=annee)
 
     doc = Document()
 
@@ -310,7 +310,7 @@ def generate_word(request):
         if not selected_programmes:
             return HttpResponse("Aucun programme sélectionné.", status=400)
 
-        programmes = ClProgrammeVisite.objects.filter(id__in=selected_programmes)
+        programmes = ClProgrammeVisite.objects.order_by('-ddpvst').filter(id__in=selected_programmes)
 
         zip_buffer = BytesIO()
         with ZipFile(zip_buffer, 'w') as zip_file:
@@ -328,8 +328,8 @@ def generate_word(request):
                 table.style = 'Table Grid'
 
                 hdr_cells = table.rows[0].cells
-                hdr_cells[0].text = 'Champ'
-                hdr_cells[1].text = 'Valeur'
+                hdr_cells[0].text = 'Visiteur'
+                hdr_cells[1].text =  f"{programme.idvst.idvstr.tnm} {programme.idvst.idvstr.tpm}"
 
                 row_cells = table.add_row().cells
                 row_cells[0].text = 'Date programmée'
@@ -350,6 +350,10 @@ def generate_word(request):
                 row_cells = table.add_row().cells
                 row_cells[0].text = 'Motif'
                 row_cells[1].text = programme.motif
+
+                row_cells = table.add_row().cells
+                row_cells[0].text = 'Directeur'
+                row_cells[1].text = f"{programme.secretaire.directeur.tnm} {programme.secretaire.directeur.tpm}"
 
                 row_cells = table.add_row().cells
                 row_cells[0].text = 'Secrétaire'
