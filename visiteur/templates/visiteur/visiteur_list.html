@@ -23,6 +23,13 @@
         width: 20px;
         height: 20px;
     }
+
+    /* Ajustement pour les écrans plus petits */
+    @media (max-width: 768px) {
+        .search-input {
+            max-width: 200px;
+        }
+    }
 </style>
 
 <div class="container-fluid mt-5">
@@ -42,7 +49,7 @@
                 <a href="{% url 'visiteur:visiteur_impression' %}" class="btn btn-secondary">
                     <i class="bi bi-printer"></i> Imprimer
                 </a>
-                <button type="submit" class="btn btn-success">
+                <button type="submit" class="btn btn-primary">
                     Traiter la sélection
                 </button>
             </div>
@@ -74,7 +81,7 @@
                     {% for visiteur in visiteurs %}
                         <tr>
                             <td>
-                                <input type="checkbox" name="visiteur_select[]" value="{{ visiteur.id }}" class="visiteur-checkbox">
+                                <input type="checkbox" name="visiteur_select_checkbox" value="{{ visiteur.id }}" class="visiteur-checkbox">
                             </td>
                             <td>{{ visiteur.tnm }}</td>
                             <td>{{ visiteur.tpm }}</td>
@@ -103,14 +110,23 @@
     </form>
 </div>
 
+<!-- Script pour ajouter les inputs cachés uniquement si les cases sont cochées -->
 <script>
     document.getElementById('visiteur-form').addEventListener('submit', function(e) {
         const form = this;
         const selected = document.querySelectorAll('.visiteur-checkbox:checked');
 
+        // S'il n'y a aucun visiteur sélectionné, on empêche l'envoi
+        if (selected.length === 0) {
+            e.preventDefault();
+            alert("Veuillez sélectionner au moins un visiteur.");
+            return;
+        }
+
         // Nettoyage des anciens champs cachés
         form.querySelectorAll('input[type="hidden"][name="visiteur_select[]"]').forEach(el => el.remove());
 
+        // Création de champs cachés pour les visiteurs sélectionnés
         selected.forEach(cb => {
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';

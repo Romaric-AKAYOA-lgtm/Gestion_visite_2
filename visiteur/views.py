@@ -182,6 +182,7 @@ def visiteur_impression(request):
     doc.save(response)
     return response
 
+
 import io
 import zipfile
 from datetime import datetime

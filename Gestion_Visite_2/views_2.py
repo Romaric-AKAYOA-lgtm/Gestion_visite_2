@@ -14,65 +14,76 @@ from programme_visite.models import ClProgrammeVisite
 from secretaire.models import ClSecretaire
 from visite.models import ClVisite
 from visiteur.models import ClVisiteur
+import io
+import base64
+import matplotlib.pyplot as plt
+from django.shortcuts import render, redirect
+from django.db.models import Count, Avg
+from django.db.models.functions import TruncYear
 
-def tatitistique_view(request):
-    username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
-    if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from docx import Document
+from visiteur.models import ClVisiteur
+from directeur.models import ClDirecteur
+from secretaire.models import ClSecretaire
+from visite.models import ClVisite
+from programme_visite.models import ClProgrammeVisite
 
-    # Récupérer toutes les visites
-    visites = ClVisite.objects.all().order_by('-ddvst', 'hvst')
+import matplotlib
+matplotlib.use('Agg')  # Configurer un backend non interactif
 
-    # Récupérer les visites pour un directeur spécifique (en filtrant par le champ tstt, qui contient le rôle)
-    directeurs_visites = visites.filter(iddirecteur__tstt='Directeur')
+import matplotlib.pyplot as plt
+import io
+import base64
 
-    # Calculer les statistiques pour l'histogramme de l'évolution des visites chaque année
-    visites_par_annee = directeurs_visites.annotate(annee_visite=models.functions.TruncYear('ddvst')) \
-                                          .values('annee_visite') \
-                                          .annotate(nombre_visites=Count('id')) \
-                                          .order_by('annee_visite')
-
-    # Générer un graphique de l'évolution des visites par année pour un directeur
-    years = [str(v['annee_visite'].year) for v in visites_par_annee]
-    counts = [v['nombre_visites'] for v in visites_par_annee]
-
+def create_graph(annees, valeurs, title, xlabel, ylabel):
     fig, ax = plt.subplots()
-    ax.bar(years, counts)
-    ax.set_title("Évolution des visites par année (Directeur)")
-    ax.set_xlabel("Année")
-    ax.set_ylabel("Nombre de visites")
+    ax.bar(annees, valeurs)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
 
-    # Convertir le graphique en image base64 pour l'intégrer dans le template
     buffer = io.BytesIO()
     plt.savefig(buffer, format='png')
     buffer.seek(0)
     image_png = buffer.getvalue()
-    graph_url = base64.b64encode(image_png).decode('utf-8')
+    return base64.b64encode(image_png).decode('utf-8')
 
-    # Progression des heures moyennes d'un programme de visite
-    heures_par_annee = directeurs_visites.annotate(annee_visite=models.functions.TruncYear('ddvst')) \
+def tatitistique_view(request):
+    username = get_connected_user(request)
+
+    if not username:
+        return redirect('login')
+
+    visites = ClVisite.objects.all().order_by('-ddvst', 'hvst')
+    directeurs_visites = visites.filter(iddirecteur__tstt='Directeur')
+
+    # Calcul des visites par année
+    visites_par_annee = directeurs_visites.annotate(annee_visite=TruncYear('ddvst')) \
+                                          .values('annee_visite') \
+                                          .annotate(nombre_visites=Count('id')) \
+                                          .order_by('annee_visite')
+
+    # Extraire les années et les valeurs pour le graphique
+    years = [str(v['annee_visite'].year) for v in visites_par_annee]
+    counts = [v['nombre_visites'] for v in visites_par_annee]
+
+    graph_url = create_graph(years, counts, "Évolution des visites par année (Directeur)", "Année", "Nombre de visites")
+
+    # Calcul des heures moyennes par année
+    heures_par_annee = directeurs_visites.annotate(annee_visite=TruncYear('ddvst')) \
                                          .values('annee_visite') \
                                          .annotate(heure_moyenne=Avg('hvst')) \
                                          .order_by('annee_visite')
 
-    # Extraire les données pour l'histogramme
+    # Extraire les années et les valeurs pour le graphique des heures
     annees_heures = [str(v['annee_visite'].year) for v in heures_par_annee]
     heures_moyennes = [v['heure_moyenne'] for v in heures_par_annee]
 
-    fig2, ax2 = plt.subplots()
-    ax2.bar(annees_heures, heures_moyennes)
-    ax2.set_title("Progression des heures moyennes d'un programme de visite par année")
-    ax2.set_xlabel("Année")
-    ax2.set_ylabel("Heure moyenne")
-
-    # Convertir en base64
-    buffer2 = io.BytesIO()
-    plt.savefig(buffer2, format='png')
-    buffer2.seek(0)
-    image_png2 = buffer2.getvalue()
-    graph_url2 = base64.b64encode(image_png2).decode('utf-8')
+    graph_url2 = create_graph(annees_heures, heures_moyennes, "Progression des heures moyennes d'un programme de visite par année", "Année", "Heure moyenne")
 
     # Récupérer la liste des secrétaires et leurs directeurs
     secretaires = ClSecretaire.objects.all().select_related('directeur')
@@ -84,7 +95,7 @@ def tatitistique_view(request):
     # Récupérer la liste des visiteurs
     visiteurs = ClVisiteur.objects.all()
 
-    # Récupérer la liste des programmes de visite confirmés et annulés
+    # Récupérer les programmes confirmés et annulés
     programmes = ClProgrammeVisite.objects.all()
     programmes_confirmes = programmes.filter(tsttpvst='Confirmé')
     programmes_annules = programmes.filter(tsttpvst='Annulé')
@@ -103,16 +114,6 @@ def tatitistique_view(request):
         'programmes_confirmes': programmes_confirmes,
         'programmes_annules': programmes_annules
     })
-
-from django.shortcuts import render
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from docx import Document
-from visiteur.models import ClVisiteur
-from directeur.models import ClDirecteur
-from secretaire.models import ClSecretaire
-from visite.models import ClVisite
-from programme_visite.models import ClProgrammeVisite
 
 def liste_utilisateurs(request):
     username = get_connected_user(request)

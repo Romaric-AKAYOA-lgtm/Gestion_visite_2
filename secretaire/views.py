@@ -129,8 +129,10 @@ def secreter_search(request):
         )
 
     return render(request, 'secretaire/secretaire_list.html', {  'username':username,'secretaires': secretaires, 'query': query})
+
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.utils.text import slugify
 from docx import Document
 from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -170,13 +172,16 @@ def generate_word(request):
                 if secretaire.img and os.path.exists(secretaire.img.path):
                     img_path = secretaire.img.path
                 else:
-                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images/person-1824147_1280_apFMjrC.png')
+                    img_path = os.path.join(settings.MEDIA_ROOT, 'user_images', 'person-1824147_1280_apFMjrC.png')
 
                 if os.path.exists(img_path):
                     para_img = doc.add_paragraph()
                     para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
                     run_img = para_img.add_run()
                     run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
+                else:
+                    print(f"⚠️ Image introuvable : {img_path}")
+
             except Exception as e:
                 print(f"Erreur image pour {secretaire.tnm} {secretaire.tpm} : {e}")
 
@@ -224,7 +229,7 @@ def generate_word(request):
             doc.save(word_buffer)
             word_buffer.seek(0)
 
-            filename = f"Secretaire_{secretaire.tnm}_{secretaire.tpm}.docx"
+            filename = f"Secretaire_{slugify(secretaire.tnm)}_{slugify(secretaire.tpm)}.docx"
             zip_file.writestr(filename, word_buffer.read())
 
     zip_buffer.seek(0)

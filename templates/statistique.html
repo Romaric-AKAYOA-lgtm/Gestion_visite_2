@@ -171,17 +171,17 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for programme in programmes_confirmes %}
+                            {% for programme in programmes_confirmes %}     hdbt
                                 <tr>
                                     <td>{{ programme.idvst.idvstr.tnm }}</td>
-                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}</td>
+                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}        A    {{ programme.hdbt|date:"H:i:s" }}    </td>
                                     <td>{{ programme.tsttpvst }}</td>
                                 </tr>
                             {% endfor %}
                             {% for programme in programmes_annules %}
                                 <tr>
                                     <td>{{ programme.idvst.idvstr.tnm }}</td>
-                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}</td>
+                                    <td>{{ programme.ddpvst|date:'Y-m-d' }}        A    {{ programme.hdbt|date:"H:i:s" }}    </td>
                                     <td>{{ programme.tsttpvst }}</td>
                                 </tr>
                             {% endfor %}

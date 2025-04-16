@@ -32,30 +32,32 @@
     <h2 class="text-center mb-4 text-white">Liste des Directeurs</h2>
 
     <!-- Formulaire de recherche et boutons -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div class="col-auto">
-            <a href="{% url 'directeur:directeur_create' %}" class="btn btn-marine me-2">
-                <i class="bi bi-person-plus"></i> Créer un nouveau directeur
-            </a>
-            <a href="{% url 'directeur:directeur_impression' %}" class="btn btn-secondary me-2">
-                <i class="bi bi-printer"></i> Imprimer
-            </a>
-            <!-- Bouton pour générer les fichiers Word -->
-            <button type="button" id="generate-word" class="btn btn-primary" disabled>
-                Générer le(s) fichier(s) Word
-            </button>
-        </div>
-
-        <!-- Formulaire de recherche -->
-        <form method="GET" action="{% url 'directeur:directeur_search1' %}" class="d-flex justify-content-end w-50" id="search-form">
-            <div class="col-auto">
-                <input type="text" name="q" class="form-control search-input" placeholder="Rechercher par nom, prénom, sexe, téléphone..." value="{{ query }}" id="search-input">
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-marine">Rechercher</button>
-            </div>
-        </form>
+<!-- Formulaire de recherche et boutons -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <div class="col-auto mb-2 mb-sm-0">
+        <a href="{% url 'directeur:directeur_create' %}" class="btn btn-marine me-2">
+            <i class="bi bi-person-plus"></i> Créer un nouveau directeur
+        </a>
+        <a href="{% url 'directeur:directeur_impression' %}" class="btn btn-secondary me-2">
+            <i class="bi bi-printer"></i> Imprimer
+        </a>
+        <!-- Bouton pour générer les fichiers Word -->
+        <button type="button" id="generate-word" class="btn btn-primary" disabled title="Sélectionnez un directeur pour générer le fichier">
+            Générer le(s) fichier(s) Word
+        </button>
     </div>
+
+    <!-- Formulaire de recherche -->
+    <form method="GET" action="{% url 'directeur:directeur_search1' %}" class="d-flex align-items-center flex-wrap col-auto ms-auto" id="search-form">
+        <div class="col-auto mb-2 mb-sm-0">
+            <input type="text" name="q" class="form-control search-input" placeholder="Rechercher par nom, prénom, sexe, téléphone..." value="{{ query }}" id="search-input">
+        </div>
+        <div class="col-auto mb-2 mb-sm-0">
+            <button type="submit" class="btn btn-marine" id="search-button">Rechercher</button>
+        </div>
+    </form>
+</div>
+
 
     <!-- Liste des directeurs -->
     <form id="directeur-form">
