@@ -21,6 +21,30 @@
 </head>
 
 <body>
+  {% if messages %}
+  {% for message in messages %}
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-info">
+          <div class="modal-header bg-info text-white">
+            <h5 class="modal-title" id="messageModalLabel">Information</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body text-dark">
+            {{ message }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-info" data-bs-dismiss="modal">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  {% endfor %}
+{% endif %}
+
+
 
   <button class="sidebar-toggle" onclick="toggleSidebar()">
     <i class="fas fa-bars"></i>
@@ -84,12 +108,7 @@
           </a>
         </li>
     
-        <!-- Lien Créer un utilisateur (Administrateur) -->
-        <li class="nav-item">
-          <a href="{% url 'connection:register' %}" class="nav-link">
-            <i class="fas fa-user-plus"></i> Créer un utilisateur
-          </a>
-        </li>
+
     
         <!-- Lien Paramètres (Administrateur) -->
         <li class="nav-item">
@@ -151,5 +170,13 @@
 
   <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'js/scripti.js' %}"></script>
+  
+  <script>
+    // Script pour déclencher automatiquement la modale
+    document.addEventListener("DOMContentLoaded", function() {
+      var myModal = new bootstrap.Modal(document.getElementById('messageModal'));
+      myModal.show();
+    });
+  </script>
 </body>
 </html>

@@ -2,58 +2,71 @@
 
 {% block contenue %}
 <div class="container mt-4">
-    <!-- Modal Inscription -->
     <div class="modal fade show" id="modalInscription" tabindex="-1" aria-labelledby="modalInscriptionLabel" aria-hidden="true" style="display: block;">
-        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="modalInscriptionLabel">Inscription</h5>
+                    <h5 class="modal-title" id="modalInscriptionLabel">
+                        {% if update_mode %} Modification des informations {% else %} Inscription {% endif %}
+                    </h5>
+                    <a href="{% url 'home' %}" class="btn-close" aria-label="Close"></a>
                 </div>
                 <div class="modal-body">
                     {% if form.errors %}
                     <div class="alert alert-danger">
                         {% for field in form %}
                             {% if field.errors %}
-                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}<br>
                             {% endif %}
                         {% endfor %}
                     </div>
                     {% endif %}
-                    <form action="{% url 'connection:register' %}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate onsubmit="return validatePasswords()">
+
+                    <form action="{% url 'connection:register' id=form.instance.id|default:0 %}" method="POST" onsubmit="return validatePasswords();">
                         {% csrf_token %}
-                    
-                        <!-- ComboBox pour sélectionner un utilisateur -->
+
                         <div class="mb-3">
-                            <label for="user" class="form-label">Choisir un utilisateur</label>
-                            <select class="form-control input-focus-blue" id="user" name="user" required>
-                                <option value="">Sélectionner un utilisateur</option> 
-                                {% for user in users %}
-                                    <option value="{{ user.id }}">{{ user.tnm }} {{ user.tpm }}  {{ user.ttvst }}</option>
+                            <label for="user" class="form-label">Utilisateur</label>
+                            <select class="form-select" name="user" id="user" {% if update_mode %} disabled {% endif %}>
+                                {% for u in users %}
+                                    <option value="{{ u.id }}"
+                                        {% if update_mode and u.id == form.instance.user.id %}
+                                            selected
+                                        {% elif not update_mode and u.id == request.user.id %}
+                                            selected
+                                        {% endif %}>
+                                        {{ u.tnm }} {{ u.tpm }} {{ u.ttvst }}
+                                    </option>
                                 {% endfor %}
                             </select>
-                        </div>
-
-                        <!-- Champ pour le Nom d'utilisateur -->
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Nom d'utilisateur</label>
-                            <input type="text" class="form-control input-focus-blue" id="username" name="username" required>
+                            {% if update_mode %}
+                                <!-- Champ caché pour envoyer la valeur de l'utilisateur sélectionné -->
+                                <input type="hidden" name="user" value="{{ form.instance.user.id }}">
+                            {% endif %}
                         </div>
                         
-                        <!-- Champ pour le mot de passe -->
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nom d'utilisateur</label>
+                            <input type="text" class="form-control input-focus-blue" id="username" name="username" required
+                                   value="{{ form.instance.username|default_if_none:'' }}">
+                        </div>
+                        
                         <div class="mb-3">
                             <label for="password" class="form-label">Mot de passe</label>
-                            <input type="password" class="form-control input-focus-blue" id="password" name="password" required>
+                            <input type="password" class="form-control input-focus-blue" id="password" name="password" {% if not update_mode %} required {% endif %}>
                         </div>
 
-                        <!-- Champ pour confirmer le mot de passe -->
                         <div class="mb-3">
                             <label for="password_confirm" class="form-label">Confirmer le mot de passe</label>
-                            <input type="password" class="form-control input-focus-blue" id="password_confirm" name="password_confirm" required>
+                            <input type="password" class="form-control input-focus-blue" id="password_confirm" name="password_confirm" {% if not update_mode %} required {% endif %}>
                         </div>
 
                         <div class="text-end">
-                             <a href="{% url 'home' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
-                            <button type="submit" class="btn btn-primary px-4 py-2 btn-sm">S'inscrire</button>
+                            <a href="{% url 'home' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 btn-sm">
+                                {% if update_mode %} Mettre à jour {% else %} S'inscrire {% endif %}
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -62,27 +75,26 @@
     </div>
 </div>
 
-<!-- Script pour verrouiller le modal ouvert jusqu'à une action -->
 <script>
     window.onload = function() {
-        var myModal = new bootstrap.Modal(document.getElementById("modalInscription"), {
+        new bootstrap.Modal(document.getElementById("modalInscription"), {
             keyboard: false,
-            backdrop: 'static'  // Empêche la fermeture en cliquant à l'extérieur
-        });
-        myModal.show();
-    }
+            backdrop: 'static'
+        }).show();
+    };
 
-    // Validation de la correspondance des mots de passe
     function validatePasswords() {
-        var password = document.getElementById("password").value;
-        var passwordConfirm = document.getElementById("password_confirm").value;
+        const password = document.getElementById("password").value;
+        const passwordConfirm = document.getElementById("password_confirm").value;
+
+        // En mode update, on peut laisser les champs vides s'ils ne sont pas modifiés
+        if (!password && !passwordConfirm) return true;
 
         if (password !== passwordConfirm) {
             alert("Les mots de passe ne correspondent pas.");
-            return false; // Empêche l'envoi du formulaire si les mots de passe ne correspondent pas
+            return false;
         }
-        return true; // Permet l'envoi du formulaire si les mots de passe sont corrects
+        return true;
     }
 </script>
-
 {% endblock %}

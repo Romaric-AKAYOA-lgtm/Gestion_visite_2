@@ -42,11 +42,9 @@ def secretaire_detail(request, id):
     secretaire = get_object_or_404(ClSecretaire, id=id)
     return render(request, 'secretaire/secretaire_detail.html', {  'username':username,'secretaire': secretaire})
 
-# Permet de créer un nouveau secrétaire
 def secretaire_create(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
@@ -54,16 +52,18 @@ def secretaire_create(request):
     directeur = ClDirecteur.objects.filter(Q(ddf__isnull=True) | Q(ddf__gte=today)).order_by('-ddf')
 
     if request.method == 'POST':
-        form = ClSecretaireForm(request.POST)
+        form = ClSecretaireForm(request.POST, request.FILES)  # Inclure request.FILES ici
         if form.is_valid():
             form.save()
             return redirect('secretaire:secretaire_list')
     else:
         form = ClSecretaireForm()
+
     return render(request, 'secretaire/secretaire_form.html', {
-          'username':username,
+        'username': username,
         'form': form,
-           'directeur': directeur,})
+        'directeur': directeur,
+    })
 
 # Permet de modifier les informations d’un secrétaire existant
 def secretaire_update(request, id):

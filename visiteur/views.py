@@ -38,41 +38,38 @@ def visiteur_detail(request, id):
 
     visiteur = get_object_or_404(ClVisiteur, id=id)
     return render(request, 'visiteur/visiteur_detail.html', {  'username':username,'visiteur': visiteur})
-
-# Permet de créer un nouveau visiteur
 def visiteur_create(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
     if request.method == 'POST':
-        form = ClVisiteurForm(request.POST)
+        form = ClVisiteurForm(request.POST, request.FILES)  # Ajouter request.FILES ici
         if form.is_valid():
             form.save()
             return redirect('visiteur:visiteur_list')
     else:
         form = ClVisiteurForm()
-    return render(request, 'visiteur/visiteur_form.html', {  'username':username,'form': form})
 
-# Permet de modifier les informations d'un visiteur
+    return render(request, 'visiteur/visiteur_form.html', {'username': username, 'form': form})
+
 def visiteur_update(request, id):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
     visiteur = get_object_or_404(ClVisiteur, id=id)
     if request.method == 'POST':
-        form = ClVisiteurForm(request.POST, instance=visiteur)
+        form = ClVisiteurForm(request.POST, request.FILES, instance=visiteur)  # Ajouter request.FILES ici
         if form.is_valid():
             form.save()
             return redirect('visiteur:visiteur_list')
     else:
         form = ClVisiteurForm(instance=visiteur)
-    return render(request, 'visiteur/visiteur_edit.html', {  'username':username,'form': form, 'visiteur':visiteur})
+
+    return render(request, 'visiteur/visiteur_edit.html', {'username': username, 'form': form, 'visiteur': visiteur})
 
 # Permet de rechercher des visiteurs
 def visiteur_search(request):

@@ -60,15 +60,17 @@ def directeur_create(request):
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     if request.method == 'POST':
-        form = ClDirecteurForm(request.POST)
+        form = ClDirecteurForm(request.POST, request.FILES)  # Ajout de request.FILES pour gérer les fichiers
         if form.is_valid():
             form.save()
             return redirect('directeur:directeur_list')
     else:
         form = ClDirecteurForm()
+
     return render(request, 'directeur/directeur_form.html', {
-             'username':username, 
-             'form': form})
+        'username': username,
+        'form': form
+    })
 
 # Permet de modifier les informations d'un directeur existant
 def directeur_update(request, id):
@@ -78,23 +80,24 @@ def directeur_update(request, id):
     if not username:
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
-        # Récupère la date du jour
+    # Récupère la date du jour
     today = timezone.now().date()
 
     directeur = get_object_or_404(ClDirecteur, id=id)
     if request.method == 'POST':
-        form = ClDirecteurForm(request.POST, instance=directeur)
+        form = ClDirecteurForm(request.POST, request.FILES, instance=directeur)  # Ajout de request.FILES
         if form.is_valid():
             form.save()
             return redirect('directeur:directeur_list')
     else:
         form = ClDirecteurForm(instance=directeur)
+
     return render(request, 'directeur/directeur_edit.html', {
-             'username':username, 
+        'username': username,
         'form': form,
-         'today': today,  # Passer la date actuelle
-         ' directeur ': directeur ,
-              })
+        'today': today,  # Passer la date actuelle
+        'directeur': directeur,  # Correction de la clé dans le context (enlever les espaces)
+    })
 
 # Permet de rechercher des directeurs en fonction d'un critère
 def directeur_search(request):

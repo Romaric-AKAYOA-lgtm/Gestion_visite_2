@@ -6,7 +6,11 @@ app_name = 'connection'  # Nom de l'application pour les redirections
 urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('', views.logout_view, name='logout'),
-    path('register/', views.register, name='register'),
+  #  path('register/', views.register, name='register'),
+    path('register/<int:id>/', views.register, name='register'),
+   
     path('manage/', views.manage_connection, name='manage'),  # Ajout de l'URL pour gérer les informations de l'utilisateur
     # Autres chemins...
+        path('detail/<int:id>/', views.detail_connection, name='detail'),
+
 ]

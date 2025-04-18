@@ -84,14 +84,15 @@ def tatitistique_view(request):
     heures_moyennes = [v['heure_moyenne'] for v in heures_par_annee]
 
     graph_url2 = create_graph(annees_heures, heures_moyennes, "Progression des heures moyennes d'un programme de visite par année", "Année", "Heure moyenne")
-
     # Récupérer la liste des secrétaires et leurs directeurs
     secretaires = ClSecretaire.objects.all().select_related('directeur')
     secretaires_data = [
-        {'secretaire': sec.tnm+' '+ sec.tpm+' '+sec.ttvst , 'directeur': sec.directeur.tnm+'  '+sec.directeur.tpm+' '+sec.directeur.ttvst}
+        {
+            'secretaire': f"{sec.tnm} {sec.tpm} {sec.ttvst}",
+            'directeur': f"{sec.directeur.tnm} {sec.directeur.tpm} {sec.directeur.ttvst}" if sec.directeur else "Aucun directeur"
+        }
         for sec in secretaires
     ]
-
     # Récupérer la liste des visiteurs
     visiteurs = ClVisiteur.objects.all()
 

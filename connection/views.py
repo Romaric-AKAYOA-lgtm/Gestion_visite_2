@@ -1,5 +1,9 @@
 # utils.py (si vous souhaitez centraliser la logique)
 from connection.models import ClConnection
+from datetime import date
+
+# views.py
+from django.shortcuts import render, get_object_or_404
 # views.py
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -20,34 +24,53 @@ def get_connected_user(request):
             return None  # Si l'utilisateur n'existe pas, retourner None
     return None  # Si aucune session n'est active, retourner None
 
+def register(request, id=None):
+    username = get_connected_user(request)
+    if not username:
+        return redirect('login')
 
-# Vue d'enregistrement (Inscription)
-def register(request):
-    # Obtenir la date actuelle
     current_date = timezone.now().date()
 
-    # Filtrer les utilisateurs ayant une ddf None ou une ddf >= à la date actuelle
-    users = ClUser.objects.filter(Q(ddf__isnull=True) | Q(ddf__gte=current_date))
-    username = get_connected_user(request)
-
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
-    if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
-
-    """Vue pour l'enregistrement des nouveaux utilisateurs."""
-    if request.method == 'POST':
-        form = ClConnectionForm(request.POST)
-        if form.is_valid():
-            # Sauvegarde la nouvelle connexion
-            form.save()
-            messages.success(request, "Inscription réussie. Vous pouvez maintenant vous connecter.")
-            return redirect('connection:login')  # Redirection vers la page de connexion
-        else:
-            messages.error(request, "Erreur lors de l'inscription. Veuillez vérifier vos données.")
+    # Filtrer selon la situation
+    if id:
+        users = ClUser.objects.filter(id=id)
     else:
-        form = ClConnectionForm()
+        users = ClUser.objects.filter(Q(ddf__isnull=True) | Q(ddf__gte=current_date))
 
-    return render(request, 'connection/register.html', {'users':users,  'username':username,'form': form})
+    instance = None
+    update_mode = False
+
+    if id:
+        try:
+            instance = ClConnection.objects.get(pk=id)
+            update_mode = True
+        except ClConnection.DoesNotExist:
+            user = get_object_or_404(ClUser, pk=id)
+            if ClConnection.objects.filter(user=user).exists():
+                messages.warning(request, "Ce compte existe déjà.")
+                return redirect('connection:login')
+            instance = ClConnection(user=user)
+
+    if request.method == 'POST':
+        form = ClConnectionForm(request.POST, instance=instance)
+        if form.is_valid():
+            form.save()
+            if update_mode:
+                messages.success(request, "Mise à jour réussie.")
+            else:
+                messages.success(request, "Inscription réussie. Vous pouvez maintenant vous connecter.")
+            return redirect('connection:login')
+        else:
+            messages.error(request, "Erreur lors de l'enregistrement. Veuillez vérifier les champs.")
+    else:
+        form = ClConnectionForm(instance=instance)
+
+    return render(request, 'connection/register.html', {
+        'form': form,
+        'users': users,
+        'username': username,
+        'update_mode': update_mode
+    })
 
 # Vue de déconnexion (Logout)
 def logout_view(request):
@@ -55,7 +78,6 @@ def logout_view(request):
     logout(request)  # Supprimer toutes les données de session
     messages.info(request, "Vous avez été déconnecté avec succès.")
     return redirect("connection:login")  # Rediriger vers la page de connexion
-from datetime import date
 
 # Vue de connexion (Login)
 def login_view(request):
@@ -92,7 +114,12 @@ def login_view(request):
                     # 🔹 Connexion réussie
                     request.session['username'] = user_obj.username
                     request.session['password'] = password
-                    messages.success(request, "Connexion utilisateur ClConnection réussie.")
+
+                    # 🔹 Message avec infos utilisateur
+                    messages.success(
+                        request,
+                        f"Bienvenue {cl_user.tnm} {cl_user.tpm} — Connexion réussie."
+                    )
                     return redirect('home')
                 else:
                     messages.error(request, "Mot de passe incorrect pour l'utilisateur ClConnection.")
@@ -130,3 +157,24 @@ def manage_connection(request):
         form = ClConnectionForm(instance=user_obj)
 
     return render(request, 'connection/manage_connection.html', {'form': form})
+
+
+def detail_connection(request, id):
+    try:
+        # Essayer de récupérer la connexion avec l'ID spécifié
+        connection = ClConnection.objects.get(id=id)
+        return render(request, 'connection/detail_connection.html', {'connection': connection})
+    except ClConnection.DoesNotExist:
+        # Si la connexion n'existe pas, essayer de récupérer l'utilisateur
+        try:
+            utilisateur = ClUser.objects.get(id=id)
+            messages.error(
+                request,
+                f"L'utilisateur {utilisateur.tnm} {utilisateur.tpm} n'a pas encore de compte."
+            )
+            # Appeler la fonction register et lui passer l'ID pour gérer l'enregistrement
+            return register(request, id=id)
+        except ClUser.DoesNotExist:
+            messages.error(request, "Aucun utilisateur correspondant à cet ID.")
+            # Rediriger vers la page d'accueil si aucun utilisateur n'est trouvé
+            return redirect('home')
