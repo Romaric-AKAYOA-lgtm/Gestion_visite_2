@@ -7,7 +7,7 @@ from users.forms import ClUserForm
 class ClSecretaireForm(ClUserForm):
     class Meta:
         model = ClSecretaire
-        fields = ClUserForm.Meta.fields + ['tstt', 'directeur']  # Ajout du champ directeur
+        fields = ClUserForm.Meta.fields + ['tstt']  # Ajout du champ directeur
         widgets = ClUserForm.Meta.widgets
 
     def __init__(self, *args, **kwargs):

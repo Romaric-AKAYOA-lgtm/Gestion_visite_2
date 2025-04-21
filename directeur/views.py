@@ -1,29 +1,21 @@
 # Create your views here.
 from django.shortcuts import render, get_object_or_404, redirect
-
-from connection.views import get_connected_user
-from .models import ClDirecteur
-from .forms import ClDirecteurForm
 from django.http import HttpResponse
 from docx import Document
-from docx.shared import Pt
-from datetime import datetime
-from django.utils import timezone
+from docx.shared import Pt, Inches
+from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from django.db.models import Q  # Importer Q pour les filtres complexes
-import zipfile
-import io
-from django.db.models import Q  # Importer Q pour les filtres complexes
-import zipfile
-import io
-from django.conf import settings
-from docx.shared import Pt
-import io
+from datetime import datetime
 import os
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from datetime import datetime
+import io
+import zipfile
+import requests
+from django.conf import settings
+from .models import ClDirecteur
+from connection.views import get_connected_user
+from .forms import ClDirecteurForm
 from django.utils import timezone
-from docx.shared import Pt
+from django.db.models import Q  # Importer Q pour les filtres complexes
 
 # Affiche la liste des directeurs
 def directeur_list(request):
@@ -135,21 +127,6 @@ def directer_search(request):
              'username':username, 
              'directeurs': directeurs, 'query': query})
 
-from django.http import HttpResponse
-from django.shortcuts import redirect
-from docx import Document
-from docx.shared import Pt, Inches
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from datetime import datetime
-import os
-import io
-import zipfile
-import requests
-from django.conf import settings
-from .models import ClDirecteur
-
-
 # 📄 Impression globale de tous les directeurs (1 fichier Word)
 def directeur_impression(request):
     username = get_connected_user(request)
@@ -193,28 +170,35 @@ def directeur_impression(request):
         for i, (label, valeur) in enumerate(champs):
             table.cell(i, 0).text = f"{label} :"
             table.cell(i, 1).text = str(valeur)
-
-        doc.add_paragraph()
-        date_para = doc.add_paragraph()
-        date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
-        run_date.bold = True
-        run_date.font.size = Pt(10)
-
+        # Espacement supplémentaire
         for _ in range(3):
             doc.add_paragraph()
+    # Ajouter un espace avant la date de génération
+    doc.add_paragraph()
 
-        ref_para = doc.add_paragraph()
-        ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
-        ref_run.bold = True
-        ref_run.font.size = Pt(10)
+    # Ajout de la date de génération
+    date_para = doc.add_paragraph()
+    date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT  # Aligner à droite
+    run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
+    run_date.bold = True
+    run_date.font.size = Pt(10)
+
+    # Espacement supplémentaire
+    for _ in range(3):
+        doc.add_paragraph()
+
+    # Signature de l'utilisateur
+    ref_para = doc.add_paragraph()
+    ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT  # Aligner à droite
+    ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+    ref_run.bold = True
+    ref_run.font.size = Pt(10)
+
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     response['Content-Disposition'] = 'attachment; filename="directeurs.docx"'
     doc.save(response)
     return response
-
 
 # 📁 Impression individuelle des directeurs sélectionnés (ZIP de fichiers Word)
 def generate_word(request):
@@ -272,18 +256,27 @@ def generate_word(request):
                 table.cell(i, 0).text = f"{label} :"
                 table.cell(i, 1).text = str(valeur)
 
+            # Espacement supplémentaire
+            for _ in range(3):
+                doc.add_paragraph()
+
+            # Ajouter un espace avant la date de génération
             doc.add_paragraph()
+
+            # Ajout de la date de génération
             date_para = doc.add_paragraph()
-            date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT  # Aligner à droite
             run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
             run_date.bold = True
             run_date.font.size = Pt(10)
 
+            # Espacement supplémentaire
             for _ in range(3):
                 doc.add_paragraph()
 
+            # Signature de l'utilisateur
             ref_para = doc.add_paragraph()
-            ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT  # Aligner à droite
             ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
             ref_run.bold = True
             ref_run.font.size = Pt(10)

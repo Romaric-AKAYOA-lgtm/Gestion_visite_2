@@ -102,7 +102,6 @@
                     <th>Nom</th>
                     <th>Prénom</th>
                     <th>Email</th>
-                    <th>Directeur</th>
                     <th>Statut</th>
                 </tr>
             </thead>
@@ -113,8 +112,7 @@
                     <td>{{ secretaire.tnm }}</td>
                     <td>{{ secretaire.tpm }}</td>
                     <td>{{ secretaire.teml }}</td>
-                    <td>{{ secretaire.directeur.tnm }} {{ secretaire.directeur.tpm }}</td>
-                    <td>{{ secretaire.tstt }}</td>
+                   <td>{{ secretaire.tstt }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="6" class="text-muted">Aucun secrétaire trouvé.</td></tr>

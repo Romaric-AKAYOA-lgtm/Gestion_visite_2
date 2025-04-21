@@ -1,64 +1,76 @@
 {% extends 'template_base.html' %}
 
 {% block contenue %}
+
 <style>
-    .btn-marine {
-        background-color: #003366;
-        border-color: #003366;
-        color: white;
-    }
+  .btn-marine {
+    background-color: #003366;
+    border-color: #003366;
+    color: white;
+  }
 
-    .btn-marine:hover {
-        background-color: #002244;
-        border-color: #002244;
-        color: white;
-    }
+  .btn-marine:hover {
+    background-color: #002244;
+    border-color: #002244;
+    color: white;
+  }
 
+  .search-input {
+    max-width: 300px;
+  }
+
+  .visite-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+
+  .table tbody tr td {
+    color: black !important;
+  }
+
+  .table tbody tr {
+    color: black !important;
+    background-color: white !important;
+  }
+
+  @media (max-width: 768px) {
     .search-input {
-        max-width: 300px;
+      max-width: 200px;
     }
-
-    .visite-checkbox {
-        width: 20px;
-        height: 20px;
-    }
+  }
 </style>
 
 <div class="container-fluid mt-5">
-    <h2 class="text-center mb-4 text-white">Liste des Visites</h2>
+  <h2 class="text-center mb-4 text-white">Liste des Visites</h2>
 
-    <!-- Formulaire principal pour traitement Word -->
-    <form id="visite-form" method="POST" action="{% url 'visite:generate_word' %}">
-        {% csrf_token %}
+  <form id="visite-form" method="POST" action="{% url 'visite:generate_word' %}">
+    {% csrf_token %}
+    <input type="hidden" id="csrf-token" value="{{ csrf_token }}">
 
-        <!-- Ligne responsive pour les boutons et la recherche -->
-        <div class="row align-items-center mb-4 gy-2">
-            <!-- Colonne gauche : Boutons -->
-            <div class="col-md-8 d-flex flex-wrap gap-2">
-                <a href="{% url 'visite:visite_create' %}" class="btn btn-marine">
-                    <i class="bi bi-person-plus"></i> Nouvelle Visite
-                </a>
-                <a href="{% url 'visite:visite_impression' %}" class="btn btn-secondary">
-                    <i class="bi bi-printer"></i> Imprimer
-                </a>
-                <button type="submit" class="btn btn-primary" id="generate-word">
-                    Traiter la sélection
-                </button>
-            </div>
+    <div class="row mb-4">
+      <div class="col-md-6 d-flex gap-2 flex-wrap">
+        <a href="{% url 'visite:visite_create' %}" class="btn btn-marine">
+          <i class="bi bi-calendar-plus"></i> Nouvelle visite
+        </a>
+        <a href="{% url 'visite:visite_impression' %}" class="btn btn-secondary">
+          <i class="bi bi-printer"></i> Imprimer
+        </a>
+        <button type="submit" class="btn btn-primary">
+          Traiter la sélection
+        </button>
+      </div>
 
-            <!-- Colonne droite : champ de recherche -->
-            <div class="col-md-4 d-flex justify-content-md-end gap-2">
-                <input type="text" name="q" class="form-control search-input" placeholder="Rechercher..." value="{{ query }}" form="search-form">
-                <button type="submit" class="btn btn-marine" form="search-form">Rechercher</button>
-            </div>
-        </div>
+      <div class="col-md-6 d-flex justify-content-end gap-2 mt-2 mt-md-0">
+        <input type="text" id="search-input" class="form-control search-input" placeholder="Rechercher par date, motif, service..." value="{{ query }}">
+        <a href="#" id="search-link" class="btn btn-marine">Rechercher</a>
+      </div>
+    </div>
 
-        <!-- Tableau des visites -->
-        <div class="table-responsive">
-            <table class="table table-hover text-center bg-white">
-                <thead class="table-dark">
-                    <tr>
-                        <th>#</th>
+    <div class="table-responsive" id="visites-table">
+      <table class="table table-hover table-bordered text-center bg-white">
+        <thead class="table-dark">
+          <tr>
+                                <th>#</th>
                         <th>Nom</th>
                         <th>Prénom</th>
                         <th>Sexe</th>
@@ -71,15 +83,15 @@
                         <th>Statut</th>
                         <th>Visitée</th>
                         <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for visite in visites %}
-                        <tr>
-                            <td>
-                                <input type="checkbox" name="visite_select[]" value="{{ visite.id }}" class="visite-checkbox">
-                            </td>
-                            <td>{{ visite.idvstr.tnm }}</td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for visite in visites %}
+          <tr>
+            <td>
+              <input type="checkbox" name="visite_select[]" value="{{ visite.id }}" class="visite-checkbox">
+            </td>
+               <td>{{ visite.idvstr.tnm }}</td>
                             <td>{{ visite.idvstr.tpm }}</td>
                             <td>{{ visite.idvstr.tsx }}</td>
                             <td>{{ visite.idvstr.ttvst }}</td>
@@ -99,51 +111,57 @@
                                     {{ visite.iddirecteur.tphne }}
                                 </a>
                             </td>
-                            <td>
-                                <a href="{% url 'visite:visite_detail' visite.id %}" class="btn btn-info btn-sm mb-1">
-                                    <i class="bi bi-eye"></i> Détails
-                                </a>
-                                <a href="{% url 'visite:visite_update' visite.id %}" class="btn btn-warning btn-sm">
-                                    <i class="bi bi-pencil-square"></i> Modifier
-                                </a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="13" class="text-muted">Aucune visite trouvée.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </form>
-
-    <!-- Formulaire séparé pour la recherche (hors du <form> principal) -->
-    <form id="search-form" method="GET" action="{% url 'visite:visite_search' %}"></form>
+            <td>
+              <a href="{% url 'visite:visite_detail' visite.id %}" class="btn btn-info btn-sm mb-1">
+                <i class="bi bi-eye"></i> Détails
+              </a>
+              <a href="{% url 'visite:visite_update' visite.id %}" class="btn btn-warning btn-sm mb-1">
+                <i class="bi bi-pencil-square"></i> Modifier
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="13" class="text-muted">Aucune visite trouvée.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
 </div>
 
-<!-- Script de validation -->
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const form = document.getElementById('visite-form');
-        const checkboxes = document.querySelectorAll('.visite-checkbox');
-        const generateBtn = document.getElementById('generate-word');
+  document.getElementById('search-link').addEventListener('click', function (e) {
+    e.preventDefault();
+    const query = document.getElementById('search-input').value.trim();
+    let url = "{% url 'visite:visite_search' %}";
+    if (query) {
+      url += "?q=" + encodeURIComponent(query);
+    }
+    window.location.href = url;
+  });
 
-        function updateButtonState() {
-            const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-            generateBtn.disabled = !anyChecked;
-        }
+  document.getElementById('visite-form').addEventListener('submit', function (e) {
+    const form = this;
+    const selected = document.querySelectorAll('.visite-checkbox:checked');
 
-        checkboxes.forEach(cb => cb.addEventListener('change', updateButtonState));
-        updateButtonState();
+    if (selected.length === 0) {
+      e.preventDefault();
+      alert("Veuillez sélectionner au moins une visite.");
+      return;
+    }
 
-        form.addEventListener('submit', function (e) {
-            const selected = document.querySelectorAll('.visite-checkbox:checked');
-            if (selected.length === 0) {
-                e.preventDefault();
-                alert("Veuillez sélectionner au moins une visite.");
-            }
-        });
+    form.querySelectorAll('input[type="hidden"][name="visite_select[]"]').forEach(el => el.remove());
+
+    selected.forEach(cb => {
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'hidden';
+      hiddenInput.name = 'visite_select[]';
+      hiddenInput.value = cb.value;
+      form.appendChild(hiddenInput);
     });
+  });
 </script>
+
 {% endblock %}

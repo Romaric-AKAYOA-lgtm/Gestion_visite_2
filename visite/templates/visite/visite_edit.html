@@ -63,9 +63,9 @@
                     <div class="mb-3">
                         <label for="iddirecteur" class="form-label">Directeur</label>
                         <select class="form-select" name="iddirecteur" id="iddirecteur" disabled>
-                            {% for secretaire in directeurs %}
-                                <option value="{{ secretaire.directeur.id }}" {% if secretaire.directeur.id == visite.iddirecteur.id %}selected{% endif %}>
-                                    {{ secretaire.directeur.tnm }} {{ secretaire.directeur.tpm }}
+                            {% for mutation in mutations_recente %}
+                                <option value="{{mutation.directeur.id }}" {% if mutation.directeur.id == visite.iddirecteur.id %}selected{% endif %}>
+                                    {{ mutation.directeur.tnm }} {{ mutation.directeur.tpm }}
                                 </option>
                             {% endfor %}
                         </select>

@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'users',
     'directeur',
     'secretaire',
+    'mutation',
     'visiteur',
     'visite',
     'programme_visite',

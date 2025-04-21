@@ -71,9 +71,8 @@
                     <div class="mb-3">
                         <label for="secretaire" class="form-label">Sélectionner une Secrétaire</label>
                         <select class="form-select" name="secretaire" required>
-                            <option value="">-- Sélectionner une Secrétaire --</option>
-                            <option value="{{ secretaire_recente.id }}">
-                                {{ secretaire_recente.tnm }} {{ secretaire_recente.tpm }}
+                           <option value="{{  mutations_recente.secretaire.id }}">
+                                {{ mutations_recente.secretaire.tnm }} {{ mutations_recente.secretaire.tpm }}
                             </option>
                         </select>
                     </div>

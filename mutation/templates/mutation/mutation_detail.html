@@ -1,0 +1,64 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<!-- Modal affichée automatiquement -->
+<div class="modal fade show" id="modalMutation" tabindex="-1" aria-labelledby="modalMutationLabel" aria-hidden="true" style="display: block;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalMutationLabel">Détails de la Mutation</h5>
+                <a href="{% url 'mutation:mutation_list' %}" class="btn-close" aria-label="Close"></a>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Secrétaire</th>
+                        <td>
+                            {% if mutation.secretaire %}
+                                {{ mutation.secretaire.tnm }} {{ mutation.secretaire.tpm }}
+                            {% else %}
+                                <em>Aucune</em>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Directeur</th>
+                        <td>
+                            {% if mutation.directeur %}
+                                {{ mutation.directeur.tnm }} {{ mutation.directeur.tpm }}
+                            {% else %}
+                                <em>Aucun</em>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Date de début</th>
+                        <td>{{ mutation.dsb|date:"d/m/Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Date de fin</th>
+                        <td>
+                            {% if mutation.ddf %}
+                                {{ mutation.ddf|date:"d/m/Y" }}
+                            {% else %}
+                                <em>Non définie</em>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'mutation:mutation_list' %}" class="btn btn-secondary btn-sm">Retour à la liste</a>
+                <a href="{% url 'mutation:mutation_update' mutation.id %}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-pencil-square"></i> Modifier
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fond noir -->
+<div class="modal-backdrop fade show"></div>
+
+{% endblock %}

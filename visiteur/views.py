@@ -112,15 +112,20 @@ def visiter_search(request):
     })
 
 def visiteur_impression(request):
+    # Vérification si l'utilisateur est connecté
     username = get_connected_user(request)
     if not username:
         return redirect('login')
 
+    # Récupération des visiteurs
     visiteurs = ClVisiteur.objects.all()
     doc = Document()
+
+    # Titre du document
     titre = doc.add_heading('Liste des Visiteurs', 0)
     titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
+    # Boucle pour chaque visiteur
     for visiteur in visiteurs:
         # Ajout de l'image en haut et centrée
         try:
@@ -137,6 +142,7 @@ def visiteur_impression(request):
         except Exception as e:
             print(f"Erreur image pour {visiteur.tnm} {visiteur.tpm} : {e}")
 
+        # Création d'un tableau pour les informations du visiteur
         table = doc.add_table(rows=10, cols=2)
         table.style = 'Table Grid'
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -157,23 +163,34 @@ def visiteur_impression(request):
         for i, (label, valeur) in enumerate(champs):
             table.cell(i, 0).text = f"{label} :"
             table.cell(i, 1).text = str(valeur)
-
-        doc.add_paragraph()
-        date_para = doc.add_paragraph()
-        date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
-        run_date.bold = True
-        run_date.font.size = Pt(10)
-
+        # Ajouter un espace avant la date
+       #doc.add_paragraph()
+            # Espacement supplémentaire
         for _ in range(3):
             doc.add_paragraph()
 
-        ref_para = doc.add_paragraph()
-        ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
-        ref_run.bold = True
-        ref_run.font.size = Pt(10)
+    # Ajouter un espace avant la date
+    doc.add_paragraph()
 
+    # Ajout de la date de génération
+    date_para = doc.add_paragraph()
+    date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
+    run_date.bold = True
+    run_date.font.size = Pt(10)
+
+    # Espacement supplémentaire
+    for _ in range(3):
+        doc.add_paragraph()
+
+    # Signature de l'utilisateur
+    ref_para = doc.add_paragraph()
+    ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+    ref_run.bold = True
+    ref_run.font.size = Pt(10)
+
+    # Réponse HTTP avec le document généré
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     response['Content-Disposition'] = 'attachment; filename="visiteurs.docx"'
     doc.save(response)

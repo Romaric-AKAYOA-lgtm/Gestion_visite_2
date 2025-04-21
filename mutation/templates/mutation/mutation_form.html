@@ -1,0 +1,99 @@
+{% extends 'template_base.html' %}
+
+{% block contenue %}
+
+<div class="container mt-4">
+    <!-- Modal Modifier Mutation -->
+    <div class="modal fade show" id="modalMutation" tabindex="-1" aria-labelledby="modalMutationLabel" aria-hidden="true" style="display: block;">
+        <div class="modal-dialog modal-lg"> <!-- Largeur augmentée -->
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalMutationLabel">Créer une mutation</h5>
+                </div>
+                <div class="modal-body">
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <form action="{% url 'mutation:mutation_create' %}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                    
+                        <!-- Sélecteur pour Secrétaire -->
+                        <div class="mb-3">
+                            <label for="secretaire" class="form-label">Secrétaire</label>
+                            <select class="form-select input-focus-blue" id="secretaire" name="secretaire" required>
+                                <option value="">Choisir un secrétaire</option>
+                                {% for secretaire in form.secretaire.field.queryset %}
+                                    <option value="{{ secretaire.id }}" {% if secretaire.id == form.secretaire.value %}selected{% endif %}>
+                                        {{ secretaire.tnm}} {{ secretaire.tpm }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Sélecteur pour Directeur -->
+                        <div class="mb-3">
+                            <label for="directeur" class="form-label">Directeur</label>
+                            <select class="form-select input-focus-blue" id="directeur" name="directeur" required>
+                                <option value="">Choisir un directeur</option>
+                                {% for directeur in form.directeur.field.queryset %}
+                                    <option value="{{ directeur.id }}" {% if directeur.id == form.directeur.value %}selected{% endif %}>
+                                        {{ directeur.tnm }} {{ directeur.tpm}}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Champ pour la Date de début -->
+                        <div class="mb-3">
+                            <label for="dsb" class="form-label">Date de début</label>
+                            <input type="date" class="form-control input-focus-blue" id="dsb" name="dsb" value="{{ form.dsb.value }}" required>
+                        </div>
+
+                        <!-- Champ pour la Date de fin -->
+                        <div class="mb-3">
+                            <label for="ddf" class="form-label">Date de fin</label>
+                            <input type="date" class="form-control input-focus-blue" id="ddf" name="ddf" value="{{ form.ddf.value }}" required>
+                        </div>
+                    
+                        <div class="text-end">
+                            <a href="{% url 'mutation:mutation_list' %}" class="btn btn-secondary px-4 py-2 btn-sm">Annuler</a>
+                            <button type="submit" class="btn btn-primary px-4 py-2 btn-sm">Créer</button>
+                        </div>
+    
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Script pour verrouiller le modal ouvert jusqu'à une action -->
+<script>
+    window.onload = function() {
+        var myModal = new bootstrap.Modal(document.getElementById("modalMutation"), {
+            keyboard: false,
+            backdrop: 'static'  // Empêche la fermeture en cliquant à l'extérieur
+        });
+        myModal.show();
+    }
+
+    function fermerModal() {
+        var modal = document.getElementById('modalMutation');
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        var backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
+</script>
+
+{% endblock %}

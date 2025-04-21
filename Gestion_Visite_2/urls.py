@@ -15,6 +15,7 @@ urlpatterns = [
    #  path('', login_view, name='login'),
    path('visiteur/', include('visiteur.urls')),  # Inclure les URLs de l'application visiteur
     path('visite/', include('visite.urls')),  # Inclure les URLs de l'application visite
+    path('mutation/', include('mutation.urls')),  # Inclure les URLs de l'application visite
     path('secretaire/', include('secretaire.urls')),  # Inclure les URLs de l'application secretaire
     path('directeur/', include('directeur.urls')),  # Inclure les URLs de l'application directeur
     # Ajoutez d'autres applications ici, si nécessaire

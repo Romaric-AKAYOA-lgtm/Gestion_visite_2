@@ -1,24 +1,28 @@
-# Create your views here.
+# Django imports
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
+from django.utils import timezone
+from django.utils.text import slugify
+from django.db.models import Q
+from django.conf import settings
 
+# Python standard library
+import os
+import io
+import zipfile
+from datetime import datetime
+
+# Application imports
 from connection.views import get_connected_user
 from directeur.models import ClDirecteur
 from .models import ClSecretaire
 from .forms import ClSecretaireForm
-from django.http import HttpResponse
 
+# docx (python-docx) imports
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from datetime import datetime
-from django.utils import timezone
-from django.db.models import Q  # Importer Q pour les filtres complexes
-import zipfile
-import io
-from django.conf import settings
-from docx.shared import Pt
-import io
-import os
+from docx.enum.table import WD_TABLE_ALIGNMENT
 
 # Affiche la liste des secrétaires
 def secretaire_list(request):
@@ -130,21 +134,6 @@ def secreter_search(request):
 
     return render(request, 'secretaire/secretaire_list.html', {  'username':username,'secretaires': secretaires, 'query': query})
 
-from django.http import HttpResponse
-from django.shortcuts import redirect
-from django.utils.text import slugify
-from docx import Document
-from docx.shared import Pt, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_TABLE_ALIGNMENT
-from datetime import datetime
-from django.conf import settings
-from .models import ClSecretaire
-import io
-import os
-import zipfile
-
-
 def generate_word(request):
     username = get_connected_user(request)
     if not username:
@@ -186,7 +175,7 @@ def generate_word(request):
                 print(f"Erreur image pour {secretaire.tnm} {secretaire.tpm} : {e}")
 
             # Création du tableau d'infos
-            table = doc.add_table(rows=11, cols=2)
+            table = doc.add_table(rows=9, cols=2)
             table.style = 'Table Grid'
             table.alignment = WD_TABLE_ALIGNMENT.CENTER
 
@@ -200,8 +189,6 @@ def generate_word(request):
                 ("Téléphone", secretaire.tphne or ''),
                 ("Statut matrimonial", secretaire.tstt or ''),
                 ("Fonction", secretaire.ttvst or ''),
-                ("Directeur référent", f"{secretaire.directeur.tnm} {secretaire.directeur.tpm}" if secretaire.directeur else 'Aucun'),
-                ("Identifiant", str(secretaire.id)),
             ]
 
             for i, (label, valeur) in enumerate(champs):
@@ -237,7 +224,6 @@ def generate_word(request):
     response['Content-Disposition'] = 'attachment; filename=secretaires.zip'
     return response
 
-
 def secretaire_impression(request):
     username = get_connected_user(request)
     if not username:
@@ -251,15 +237,30 @@ def secretaire_impression(request):
     titre.alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph(f"Nombre total de secrétaires : {secretaires.count()}", style='BodyText')
 
-    # Ajout des fiches
-    for idx, s in enumerate(secretaires):
-        #if idx > 0:
-            #doc.add_page_break()
-
-        # Ajout manuel des infos
+    for s in secretaires:
+          # Titre fiche
         heading = doc.add_heading(f'FICHE DE {s.tnm.upper()} {s.tpm.upper()}', level=1)
         heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
+        # Ajout de l'image
+        try:
+            if s.img and os.path.exists(s.img.path):
+                img_path = s.img.path
+            else:
+                img_path = os.path.join(settings.MEDIA_ROOT, 'user_images', 'person-1824147_1280_apFMjrC.png')
+
+            if os.path.exists(img_path):
+                para_img = doc.add_paragraph()
+                para_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run_img = para_img.add_run()
+                run_img.add_picture(img_path, width=Inches(1.0), height=Inches(1.25))
+            else:
+                print(f"⚠️ Image introuvable : {img_path}")
+        except Exception as e:
+            print(f"Erreur image pour {s.tnm} {s.tpm} : {e}")
+
+
+        # Tableau des informations
         table = doc.add_table(rows=0, cols=2)
         table.style = 'Table Grid'
 
@@ -274,7 +275,6 @@ def secretaire_impression(request):
             ("Email", s.teml),
             ("Statut matrimonial", s.tstt),
             ("Fonction", s.ttvst),
-            ("Directeur référent", f"{s.directeur.tnm} {s.directeur.tpm}" if s.directeur else 'Aucun')
         ]
 
         for label, value in infos:
@@ -282,22 +282,26 @@ def secretaire_impression(request):
             row[0].text = f"{label} :"
             row[1].text = str(value)
 
-    doc.add_paragraph()
+        doc.add_paragraph()  # Espacement entre les fiches
+
+    # Signature et date
     date_para = doc.add_paragraph()
     date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     run_date = date_para.add_run(f"Fait à Brazzaville, le {datetime.today().strftime('%d/%m/%Y')}")
     run_date.bold = True
     run_date.font.size = Pt(10)
-    for _ in range(3):
-            doc.add_paragraph()
+
+    doc.add_paragraph()
+    doc.add_paragraph()
+    doc.add_paragraph()
 
     ref_para = doc.add_paragraph()
     ref_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
+    ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}")
     ref_run.bold = True
     ref_run.font.size = Pt(10)
 
-    # Génération de la réponse HTTP avec le fichier Word
+    # Génération du document Word
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
     response['Content-Disposition'] = 'attachment; filename="liste_secretaires.docx"'
     doc.save(response)

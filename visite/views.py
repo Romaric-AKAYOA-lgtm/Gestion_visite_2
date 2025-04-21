@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.utils import timezone
 from datetime import datetime
 from connection.views import get_connected_user
+from directeur.models import ClDirecteur
+from mutation.models import CLMutation
 from secretaire.models import ClSecretaire
 from visiteur.models import ClVisiteur
 from .models import ClVisite
@@ -13,17 +15,27 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_ORIENT
 from django.db.models import Q
 from django.core.exceptions import ValidationError
-
+from django.core.paginator import Paginator
 
 def visite_list(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
+    # Redirection si l'utilisateur n'est pas connecté
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
-    visites = ClVisite.objects.all().order_by('-ddvst', 'hvst')
-    return render(request, 'visite/visite_list.html', {  'username':username,'visites': visites})
+    # Récupération des visites et tri
+    visites_all = ClVisite.objects.all().order_by('-ddvst', 'hvst')
+
+    # Pagination : 10 visites par page
+    paginator = Paginator(visites_all, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'visite/visite_list.html', {
+        'username': username,
+        'visites': page_obj,
+    })
 
 
 # Vue pour afficher les détails d'une visite
@@ -39,31 +51,33 @@ def visite_detail(request, id):
 
 def visite_create(request):
     username = get_connected_user(request)
-
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
     visiteur = ClVisiteur.objects.all().order_by('tnm')
-    
-    # Récupérer les secrétaires dont les directeurs sont associés
-    directeurs = ClSecretaire.objects.filter(
-        Q(directeur__isnull=False)  # Filtrer ceux qui ont un directeur
+
+    # Récupérer les mutations dont 'ddf' est NULL ou supérieur à la date actuelle
+    mutations_recente = CLMutation.objects.filter(
+        ddf__isnull=True  # ddf est NULL
+    ).union(
+        CLMutation.objects.filter(
+            ddf__gte=timezone.now()  # ddf est supérieur ou égal à la date actuelle
+        )
     )
 
     if request.method == 'POST':
         form = ClVisiteForm(request.POST)
         if form.is_valid():
-            form.save()  # Sauvegarder la nouvelle visite
-            return redirect('visite:visite_list')  # Rediriger vers la liste des visites
+            form.save()
+            return redirect('visite:visite_list')
     else:
-        form = ClVisiteForm()  # Afficher un formulaire vide
+        form = ClVisiteForm()
 
     return render(request, 'visite/visite_form.html', {
-          'username':username,
+      'mutations_recente':mutations_recente,
+        'username': username,
         'form': form,
         'visiteur': visiteur,
-        'directeurs': directeurs,  # Passer la liste des secrétaires avec directeurs associés
     })
 
 def visite_update(request, id):
@@ -81,8 +95,14 @@ def visite_update(request, id):
     
     # Récupérer la liste des visiteurs et des secrétaires associés à des directeurs
     visiteurs = ClVisiteur.objects.all().order_by('tnm')
-    directeurs = ClSecretaire.objects.filter(directeur__isnull=False)
-
+    # Récupérer les mutations dont 'ddf' est NULL ou supérieur à la date actuelle
+    mutations_recente = CLMutation.objects.filter(
+        ddf__isnull=True  # ddf est NULL
+    ).union(
+        CLMutation.objects.filter(
+            ddf__gte=timezone.now()  # ddf est supérieur ou égal à la date actuelle
+        )
+    )
     if request.method == 'POST':
         form = ClVisiteForm(request.POST, instance=visite)
         if form.is_valid():
@@ -94,7 +114,7 @@ def visite_update(request, id):
                 return render(request, 'visite/visite_edit.html', {
                     'form': form,
                     'visiteurs': visiteurs,
-                    'directeurs': directeurs,
+                    'mutations_recente': mutations_recente, 
                     'visite': visite,
                     'error': f"Erreur de validation : {str(e)}"  # Passer l'erreur à afficher
                 })
@@ -103,7 +123,7 @@ def visite_update(request, id):
                 return render(request, 'visite/visite_edit.html', {
                     'form': form,
                     'visiteurs': visiteurs,
-                    'directeurs': directeurs,
+                   'mutations_recente': mutations_recente, 
                     'visite': visite,
                     'error': f"Une erreur inattendue s'est produite : {str(e)}"
                 })
@@ -114,28 +134,28 @@ def visite_update(request, id):
           'username':username,
         'form': form,
         'visiteurs': visiteurs,  # Passer la liste des visiteurs
-        'directeurs': directeurs,  # Passer la liste des directeurs associés
+       'mutations_recente': mutations_recente, 
         'visite': visite,  # Passer la visite à modifier
     })
 
 def visite_search(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
+    # Vérification de la session utilisateur
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
-    # Obtenir les paramètres de recherche
+    # Récupération des paramètres de recherche
     query = request.GET.get('q', '')
     tnm = request.GET.get('tnm', '')
     tpm = request.GET.get('tpm', '')
     tsx = request.GET.get('tsx', '')
     ttvst = request.GET.get('ttvst', '')
-    
-    # Filtrage des visites
+
+    # Requête de base
     visites = ClVisite.objects.all().order_by('-ddvst')
 
-    # Appliquer les filtres en fonction des champs remplis
+    # Application des filtres
     if query:
         visites = visites.filter(tobjt__icontains=query)
     if tnm:
@@ -146,8 +166,22 @@ def visite_search(request):
         visites = visites.filter(idvstr__tsx__icontains=tsx)
     if ttvst:
         visites = visites.filter(idvstr__ttvst__icontains=ttvst)
-    
-    return render(request, 'visite/visite_list.html', {  'username':username,'visites': visites, 'query': query, 'tnm': tnm, 'tpm': tpm, 'tsx': tsx, 'ttvst': ttvst})
+
+    context = {
+        'username': username,
+        'visites': visites,
+        'query': query,
+        'tnm': tnm,
+        'tpm': tpm,
+        'tsx': tsx,
+        'ttvst': ttvst,
+    }
+
+    # Ajoute un message si aucune visite trouvée
+    if not visites.exists():
+        context['message'] = 'Aucune visite trouvée avec les critères spécifiés.'
+
+    return render(request, 'visite/visite_list.html', context)
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse

@@ -1,34 +1,28 @@
 import json
-from pyexpat.errors import messages
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
-from zipfile import ZipFile
-from connection.views import get_connected_user
-from secretaire.models import ClSecretaire
-from visite.models import ClVisite
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
-from datetime import datetime
-from .models import ClProgrammeVisite
-from .forms import ClProgrammeVisiteForm
-from django.shortcuts import get_object_or_404
-from .models import ClProgrammeVisite
-from docx import Document
-from django.utils.timezone import now
 from django.db.models import Q
-from django.shortcuts import render, get_object_or_404, redirect
-from django.utils.timezone import now
-from django.db.models import Q  # Pour les requêtes complexes avec OR / AND
-from django.http import JsonResponse
+from datetime import datetime
 from io import BytesIO
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
 from docx import Document
-import json
 from docx.enum.section import WD_ORIENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from datetime import datetime
-from django.utils import timezone
 from docx.shared import Pt
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+
+# Modèles
+from mutation.models import CLMutation
+from secretaire.models import ClSecretaire
+from visite.models import ClVisite
+from .models import ClProgrammeVisite
+
+# Formulaires
+from .forms import ClProgrammeVisiteForm
+
+# Connexion
+from connection.views import get_connected_user
 
 
 # Vue pour afficher la liste des programmes de visite
@@ -53,15 +47,13 @@ def programme_visite_detail(request, id):
     programme = get_object_or_404(ClProgrammeVisite, id=id)  # Récupérer un programme de visite par ID
     return render(request, 'programme_visite/programme_visite_detail.html', {  'username':username,'programme': programme})
 
-
 def programme_visite_create(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
         return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
-    today = now().date()
+    today = timezone.now().date()
 
     # Récupérer les visites confirmées et qui ne sont pas déjà programmées
     visites = ClVisite.objects.filter(
@@ -69,19 +61,18 @@ def programme_visite_create(request):
         ddvst__lte=today
     ).exclude(id__in=ClProgrammeVisite.objects.values_list('idvst_id', flat=True)).order_by('-ddvst')
 
-    # Vérifier qu'il existe des visites
     if visites.exists():
-        # Récupérer la secrétaire la plus récente associée au directeur de la première visite
-        secretaire_recente = ClSecretaire.objects.filter(
+        # Récupérer les mutations récentes (ddf est NULL ou supérieur à la date actuelle)
+        mutations_recente = CLMutation.objects.filter(
             directeur=visites.first().iddirecteur,
-            dsb__lte=now(),  # Assurez-vous que la date de début (dsb) est inférieure ou égale à la date actuelle
+            dsb__lte=timezone.now(),  # La date de début doit être inférieure ou égale à la date actuelle
         ).filter(
-            Q(ddf__isnull=True) | Q(ddf__lte=now())  # Filtrer si ddf est None ou inférieur à la date actuelle
-        ).order_by('-dsb').first()  # Trier par dsb de manière décroissante
+            Q(ddf__isnull=True) | Q(ddf__lte=timezone.now())  # Si ddf est NULL ou inférieur à la date actuelle
+        ).order_by('-dsb').first()  # Prendre la mutation la plus récente
     else:
-        secretaire_recente = None
+        mutations_recente = None
 
-    # Récupérer un formulaire pour la création de programme de visite
+    # Formulaire pour créer un programme de visite
     form = ClProgrammeVisiteForm(request.POST or None)
 
     if request.method == 'POST' and form.is_valid():
@@ -89,11 +80,52 @@ def programme_visite_create(request):
         return redirect('programme_visite:programme_visite_list')
 
     return render(request, 'programme_visite/programme_visite_form.html', {
-          'username':username,
+        'username': username,
         'form': form,
         'visites': visites,
-        'secretaire_recente': secretaire_recente  # Passer la secrétaire récente au template
+        'mutations_recente': mutations_recente  # Passer la mutation la plus récente au template
     })
+
+
+def programme_visite_update(request, id):
+    username = get_connected_user(request)
+
+    if not username:
+        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
+    programme = get_object_or_404(ClProgrammeVisite, id=id)
+    visite = programme.idvst
+    directeur = visite.iddirecteur
+
+    # Récupérer les mutations récentes (ddf est NULL ou supérieur à la date actuelle)
+    mutations_recente = CLMutation.objects.filter(
+        directeur=directeur,
+        dsb__lte=timezone.now(),  # Secrétaire déjà en poste
+    ).filter(
+        Q(ddf__isnull=True) | Q(ddf__gte=timezone.now())  # Soit toujours en poste, soit fin de poste dans le futur
+    ).order_by('-dsb').first()
+
+    if request.method == 'POST':
+        form = ClProgrammeVisiteForm(request.POST, instance=programme)
+        if form.is_valid():
+            form.save()
+            return redirect('programme_visite:programme_visite_list')
+    else:
+        form = ClProgrammeVisiteForm(instance=programme)
+
+        # Si pas déjà définie, on propose une secrétaire par défaut
+        if mutations_recente and not programme.secretaire:
+            form.fields['secretaire'].initial = mutations_recente.id
+
+    return render(request, 'programme_visite/programme_visite_edit.html', {
+        'username': username,
+        'form': form,
+        'programme': programme,
+        'visite': visite,
+        'directeur': directeur,
+        'mutations_recente': mutations_recente
+    })
+
 def programme_visite_list(request):
     username = get_connected_user(request)
 
@@ -116,49 +148,7 @@ def programme_visite_list(request):
 
     return render(request, 'programme_visite/programme_visite_list.html', {  'username':username,'programmes': programmes, 'query': query})
 
-def programme_visite_update(request, id):
-    username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
-    if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
-
-    programme = get_object_or_404(ClProgrammeVisite, id=id)
-
-    # Étape 1️⃣ : récupérer la visite liée à ce programme
-    visite = programme.idvst
-
-    # Étape 2️⃣ : récupérer le directeur lié à cette visite
-    directeur = visite.iddirecteur
-
-    # Étape 3️⃣ : récupérer la secrétaire la plus récente de ce directeur
-    secretaire_recente = ClSecretaire.objects.filter(
-        directeur=directeur,
-        dsb__lte=now()  # Secrétaire déjà en poste
-    ).filter(
-          Q(ddf__isnull=True) | Q(ddf__gte=now())  # Soit toujours en poste, soit fin de poste dans le futur
-    ).order_by('-dsb').first()  # La plus récente
-
-    if request.method == 'POST':
-        form = ClProgrammeVisiteForm(request.POST, instance=programme)
-        if form.is_valid():
-            form.save()
-            return redirect('programme_visite:programme_visite_list')
-    else:
-        form = ClProgrammeVisiteForm(instance=programme)
-
-        # Si pas déjà définie, on propose une secrétaire par défaut (pré-remplissage)
-        if secretaire_recente and not programme.secretaire:
-            form.fields['secretaire'].initial = secretaire_recente.id
-
-    return render(request, 'programme_visite/programme_visite_edit.html', {
-          'username':username,
-        'form': form,
-        'programme': programme,
-        'visite': visite,
-        'directeur': directeur,
-        'secretaire_recente': secretaire_recente
-    })
 
 
 from io import BytesIO

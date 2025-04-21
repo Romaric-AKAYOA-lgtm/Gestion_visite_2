@@ -10,6 +10,7 @@ from django.utils import timezone
 from datetime import datetime
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.section import WD_ORIENT
+from mutation.models import CLMutation
 from programme_visite.models import ClProgrammeVisite
 from secretaire.models import ClSecretaire
 from visite.models import ClVisite
@@ -85,14 +86,19 @@ def tatitistique_view(request):
 
     graph_url2 = create_graph(annees_heures, heures_moyennes, "Progression des heures moyennes d'un programme de visite par année", "Année", "Heure moyenne")
     # Récupérer la liste des secrétaires et leurs directeurs
-    secretaires = ClSecretaire.objects.all().select_related('directeur')
+
+    # Requête pour charger toutes les mutations avec leurs relations
+    mutations = CLMutation.objects.select_related('secretaire', 'directeur').all()
+
+    # Extraire les données secrétaires + directeurs
     secretaires_data = [
         {
-            'secretaire': f"{sec.tnm} {sec.tpm} {sec.ttvst}",
-            'directeur': f"{sec.directeur.tnm} {sec.directeur.tpm} {sec.directeur.ttvst}" if sec.directeur else "Aucun directeur"
+            'secretaire': f"{mut.secretaire.tnm} {mut.secretaire.tpm} {mut.secretaire.ttvst}",
+            'directeur': f"{mut.directeur.tnm} {mut.directeur.tpm} {mut.directeur.ttvst}"
         }
-        for sec in secretaires
+        for mut in mutations
     ]
+
     # Récupérer la liste des visiteurs
     visiteurs = ClVisiteur.objects.all()
 
@@ -104,6 +110,7 @@ def tatitistique_view(request):
     # Passer toutes les informations à la template
     return render(request, 'statistique.html', {
         'username': username,
+        'mutations': mutations,
         'visites': visites,
         'graph_url': graph_url,
         'graph_url2': graph_url2,
@@ -125,7 +132,7 @@ def liste_utilisateurs(request):
 
     visiteurs = ClVisiteur.objects.all().order_by('tnm')
     directeurs = ClDirecteur.objects.all().order_by('tnm')
-    secretaires = ClSecretaire.objects.select_related('directeur').all()
+    secretaires = ClSecretaire.objects.all().order_by('-ddf')
     return render(request, 'liste_utilisateurs.html', {
         'visiteurs': visiteurs,
         'directeurs': directeurs,
@@ -133,13 +140,13 @@ def liste_utilisateurs(request):
         'username':username,
     })
 
+
 @csrf_exempt
 def generate_word(request):
     username = get_connected_user(request)
 
-    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('login')
 
     if request.method == "POST":
         visiteurs_ids = request.POST.getlist("visiteurs")
@@ -168,13 +175,11 @@ def generate_word(request):
                         row = table.add_row().cells
                         row[0].text = label
                         row[1].text = value
+                doc.add_paragraph()
 
                 visites = ClVisite.objects.filter(idvstr=v)
 
-                doc.add_paragraph("")
-
-                # Programmes Confirmés
-                confirmes = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites, tsttpvst='confirmé')
+                confirmes = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='confirmé')
                 if confirmes.exists():
                     doc.add_heading("Programmes Confirmés", level=3)
                     tbl_conf = doc.add_table(rows=1, cols=3)
@@ -189,10 +194,9 @@ def generate_word(request):
                         row[0].text = str(p.ddpvst)
                         row[1].text = str(p.hdbt)
                         row[2].text = f"{directeur.tnm} {directeur.tpm}"
-                    doc.add_paragraph("")  # mb-2
+                    doc.add_paragraph()
 
-                # Programmes Annulés
-                annules = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites, tsttpvst='annulé')
+                annules = ClProgrammeVisite.objects.filter(idvst__in=visites, tsttpvst='annulé')
                 if annules.exists():
                     doc.add_heading("Programmes Annulés", level=3)
                     tbl_annul = doc.add_table(rows=1, cols=3)
@@ -206,7 +210,7 @@ def generate_word(request):
                         row[0].text = str(p.ddpvst)
                         row[1].text = str(p.hdbt)
                         row[2].text = p.motif or "Non spécifié"
-                    doc.add_paragraph("")  # mb-2
+                    doc.add_paragraph()
 
         # === DIRECTEURS ===
         if directeurs_ids:
@@ -227,7 +231,7 @@ def generate_word(request):
                         row[1].text = value
 
                 visites_dir = ClVisite.objects.filter(iddirecteur=d)
-                programmes = ClProgrammeVisite.objects.order_by('-ddpvst').filter(idvst__in=visites_dir)
+                programmes = ClProgrammeVisite.objects.filter(idvst__in=visites_dir)
 
                 if programmes.exists():
                     doc.add_heading("Programmes Associés", level=3)
@@ -243,12 +247,12 @@ def generate_word(request):
                         row[0].text = str(p.ddpvst)
                         row[1].text = str(p.hdbt)
                         row[2].text = f"{visiteur.tnm} {visiteur.tpm}"
-                    doc.add_paragraph("")  # mb-2
+                    doc.add_paragraph()
 
         # === SECRETAIRES ===
         if secretaires_ids:
             doc.add_heading("Secrétaires", level=1)
-            secretaires = ClSecretaire.objects.select_related('directeur').filter(id__in=secretaires_ids)
+            secretaires = ClSecretaire.objects.filter(id__in=secretaires_ids)
             for s in secretaires:
                 table = doc.add_table(rows=1, cols=2)
                 table.style = 'Table Grid'
@@ -256,7 +260,6 @@ def generate_word(request):
                     ("Nom complet", f"{s.tnm} {s.tpm}"),
                     ("Téléphone", s.tphne),
                     ("Email", s.teml),
-                    ("Directeur", f"{s.directeur.tnm} {s.directeur.tpm}" if s.directeur else None)
                 ]
                 for label, value in fields:
                     if value:
@@ -264,8 +267,11 @@ def generate_word(request):
                         row[0].text = label
                         row[1].text = value
 
-                if s.directeur:
-                    visites_dir = ClVisite.objects.filter(iddirecteur=s.directeur)
+                # Récupération du directeur via la mutation
+                mutation = CLMutation.objects.filter(secretaire=s).select_related('directeur').first()
+                if mutation and mutation.directeur:
+                    directeur = mutation.directeur
+                    visites_dir = ClVisite.objects.filter(iddirecteur=directeur)
                     programmes = ClProgrammeVisite.objects.filter(idvst__in=visites_dir)
 
                     if programmes.exists():
@@ -282,7 +288,9 @@ def generate_word(request):
                             row[0].text = str(p.ddpvst)
                             row[1].text = str(p.hdbt)
                             row[2].text = f"{visiteur.tnm} {visiteur.tpm}"
-                        doc.add_paragraph("")  # mb-2
+                        doc.add_paragraph()
+
+        # === Signature ===
         doc.add_paragraph()
         date_para = doc.add_paragraph()
         date_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -298,6 +306,7 @@ def generate_word(request):
         ref_run = ref_para.add_run(f"{username.user.tnm.upper()} {username.user.tpm}   {' ' * 10}")
         ref_run.bold = True
         ref_run.font.size = Pt(10)
+
         # === Export Word ===
         response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         response['Content-Disposition'] = 'attachment; filename="acteurs_et_programmes.docx"'

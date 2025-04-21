@@ -73,8 +73,8 @@
                         <label for="secretaire" class="form-label">Sélectionner une Secrétaire</label>
                         <select class="form-select" name="secretaire" required {% if form.instance.tsttpvst == 'confirmé' and form.instance.hhf %}disabled{% endif %}>
                             <option value="">-- Sélectionner une Secrétaire --</option>
-                            <option value="{{ secretaire_recente.id }}" {% if secretaire_recente.id == form.instance.secretaire.id %}selected{% endif %}>
-                                {{ secretaire_recente.tnm }} {{ secretaire_recente.tpm }}
+                            <option value="{{mutations_recente.secretaire.id }}" {% if mutations_recente.secretaire.id == form.instance.secretaire.id %}selected{% endif %}>
+                                {{mutations_recente.secretaire.tnm }} {{ mutations_recente.secretaire.tpm }}
                             </option>
                         </select>
                     </div>
