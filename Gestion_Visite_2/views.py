@@ -16,7 +16,7 @@ def home_view(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # Récupérer tous les directeurs, secrétaires, et visiteurs
     directeurs = ClDirecteur.objects.all()

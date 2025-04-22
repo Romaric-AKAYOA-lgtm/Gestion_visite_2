@@ -23,7 +23,7 @@ def directeur_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     directeurs = ClDirecteur.objects.all()
     return render(request, 'directeur/directeur_list.html', {
@@ -36,7 +36,7 @@ def directeur_detail(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     directeur = get_object_or_404(ClDirecteur, id=id)
     return render(request, 'directeur/directeur_detail.html', {
@@ -49,7 +49,7 @@ def directeur_create(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     if request.method == 'POST':
         form = ClDirecteurForm(request.POST, request.FILES)  # Ajout de request.FILES pour gérer les fichiers
@@ -70,7 +70,7 @@ def directeur_update(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # Récupère la date du jour
     today = timezone.now().date()
@@ -97,7 +97,7 @@ def directeur_search(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '')
     directeurs = ClDirecteur.objects.filter(tnm__icontains=query)  # Exemple de filtre par nom
@@ -110,7 +110,7 @@ def directer_search(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '').strip()
     directeurs = ClDirecteur.objects.all()
@@ -130,8 +130,10 @@ def directer_search(request):
 # 📄 Impression globale de tous les directeurs (1 fichier Word)
 def directeur_impression(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     directeurs = ClDirecteur.objects.all()
     doc = Document()
@@ -203,8 +205,10 @@ def directeur_impression(request):
 # 📁 Impression individuelle des directeurs sélectionnés (ZIP de fichiers Word)
 def generate_word(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     directeur_ids = request.POST.getlist('directeur_select[]')
     if not directeur_ids:

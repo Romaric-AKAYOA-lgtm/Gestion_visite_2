@@ -23,7 +23,7 @@ def visiteur_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     visiteurs = ClVisiteur.objects.all()
     return render(request, 'visiteur/visiteur_list.html', {  'username':username,'visiteurs': visiteurs})
@@ -34,15 +34,17 @@ def visiteur_detail(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     visiteur = get_object_or_404(ClVisiteur, id=id)
     return render(request, 'visiteur/visiteur_detail.html', {  'username':username,'visiteur': visiteur})
 def visiteur_create(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     if request.method == 'POST':
         form = ClVisiteurForm(request.POST, request.FILES)  # Ajouter request.FILES ici
@@ -57,8 +59,10 @@ def visiteur_create(request):
 def visiteur_update(request, id):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     visiteur = get_object_or_404(ClVisiteur, id=id)
     if request.method == 'POST':
@@ -77,7 +81,7 @@ def visiteur_search(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '')
     visiteurs = ClVisiteur.objects.filter(tnm__icontains=query)  # Exemple de filtre par nom
@@ -85,8 +89,10 @@ def visiteur_search(request):
 def visiter_search(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     query = request.GET.get('q', '').strip()
 
@@ -114,8 +120,11 @@ def visiter_search(request):
 def visiteur_impression(request):
     # Vérification si l'utilisateur est connecté
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     # Récupération des visiteurs
     visiteurs = ClVisiteur.objects.all()
@@ -209,8 +218,11 @@ from docx.shared import Inches, Pt
 
 def generate_word(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     visiteur_ids = request.POST.getlist('visiteur_select[]')
     if not visiteur_ids:

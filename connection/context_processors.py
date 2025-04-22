@@ -1,32 +1,43 @@
-from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from connection.models import ClConnection
 
 def get_user_info_from_session(request):
-    """Récupère les informations de l'utilisateur depuis la session."""
+    """Récupère les informations de l'utilisateur depuis la session,
+    que ce soit un utilisateur ClConnection ou un superutilisateur Django.
+    """
     
-    # Récupérer le nom d'utilisateur depuis la session
     username = request.session.get('username', None)
     
     if not username:
         return None  # Aucun utilisateur trouvé dans la session
-    
-    # Essayons de récupérer les données de l'utilisateur via le modèle Django User
+
+    # Tentative 1 : Utilisateur dans ClConnection
     try:
-        # Essayer de récupérer l'utilisateur de ClConnection
         user_info = ClConnection.objects.get(username=username)
-        
-        # Récupérer le nom, prénom, statut et image si l'utilisateur existe
+
         user_data = {
             'username': user_info.username,
-            'nom': user_info.user.tnm,  # Assurez-vous que vous avez le bon modèle lié
-            'prenom': user_info.user.tpm,  # Assurez-vous que vous avez le bon modèle lié
-            'statut': user_info.user.tstt,  # Assurez-vous que vous avez le bon modèle lié
-            'image': user_info.user.img.url if user_info.user.img else None  # Image de profil
+            'nom': user_info.user.tnm,
+            'prenom': user_info.user.tpm,
+            'statut': user_info.user.tstt,
+            'image': user_info.user.img.url if user_info.user.img else None
         }
-        
         return user_data
-    
+
     except ClConnection.DoesNotExist:
-        return None  # Aucun utilisateur trouvé dans ClConnection
+        # Tentative 2 : Vérifier si c'est un superuser Django
+        try:
+            user = User.objects.get(username=username)
+            if user.is_superuser:
+                return {
+                    'username': user.username,
+                    'nom': user.first_name or 'Super',
+                    'prenom': user.last_name or 'Utilisateur',
+                    'statut': 'Superutilisateur',
+                    'image': None  # ou un chemin par défaut
+                }
+        except User.DoesNotExist:
+            return None
+
     except Exception as e:
-        return {'error': str(e)}  # En cas d'erreur
+        return {'error': str(e)}

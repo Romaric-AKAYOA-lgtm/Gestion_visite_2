@@ -16,7 +16,7 @@ def administration_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # 🔹 Vérifier l'activation
     activation = Activation.objects.first()
@@ -35,7 +35,7 @@ def administration_detail(request, id):  # Accepte l'ID comme paramètre
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # Récupérer l'administration par son ID
     administration = get_object_or_404(Administration, id=id)
@@ -47,7 +47,7 @@ def administration_create(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     if request.method == 'POST':
         form = AdministrationForm(request.POST, request.FILES)
@@ -63,7 +63,7 @@ def administration_modify(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # Récupérer l'administration existante
     administration = get_object_or_404(Administration, id=id)

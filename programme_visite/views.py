@@ -31,7 +31,7 @@ def programme_visite_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     programmes = ClProgrammeVisite.objects.all().order_by('-ddpvst ')  # Récupérer tous les programmes de visite
     return render(request, 'programme_visite/programme_visite_list.html', {  'username':username,'programmes': programmes})
@@ -42,7 +42,7 @@ def programme_visite_detail(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     programme = get_object_or_404(ClProgrammeVisite, id=id)  # Récupérer un programme de visite par ID
     return render(request, 'programme_visite/programme_visite_detail.html', {  'username':username,'programme': programme})
@@ -50,8 +50,9 @@ def programme_visite_detail(request, id):
 def programme_visite_create(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     today = timezone.now().date()
 
@@ -90,8 +91,9 @@ def programme_visite_create(request):
 def programme_visite_update(request, id):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     programme = get_object_or_404(ClProgrammeVisite, id=id)
     visite = programme.idvst
@@ -131,7 +133,7 @@ def programme_visite_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '')
 
@@ -168,7 +170,7 @@ def imprimer_programme_visite(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     programme = get_object_or_404(ClProgrammeVisite, id=id)
     doc = Document()
@@ -226,7 +228,7 @@ def imprimer_liste_programmes_visites(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     today = timezone.now().date()
     mois = today.month

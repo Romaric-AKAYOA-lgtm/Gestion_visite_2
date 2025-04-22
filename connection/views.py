@@ -14,20 +14,32 @@ from connection.models import ClConnection
 from users.models import ClUser
 from django.utils import timezone
 from django.db.models import Q  
+from django.contrib.auth.models import User  # Import du modèle User de Django
+
 def get_connected_user(request):
-    """Retourne l'utilisateur actuellement connecté à partir de la session."""
+    """Retourne l'utilisateur connecté à partir de ClConnection, ou le superuser s'il est connecté."""
     username = request.session.get('username')
+    
     if username:
         try:
-            return ClConnection.objects.get(username=username)  # Retourne l'objet ClConnection
+            # Vérifie si l'utilisateur est dans ClConnection
+            return ClConnection.objects.get(username=username)
         except ClConnection.DoesNotExist:
-            return None  # Si l'utilisateur n'existe pas, retourner None
-    return None  # Si aucune session n'est active, retourner None
+            try:
+                # Vérifie si c'est un superuser Django
+                user = User.objects.get(username=username)
+                if user.is_superuser:
+                    return user  # Retourne l'utilisateur Django s’il est superutilisateur
+            except User.DoesNotExist:
+                return None  # Aucun utilisateur trouvé
+    return None  # Aucune session active
 
 def register(request, id=None):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     current_date = timezone.now().date()
 
@@ -158,23 +170,33 @@ def manage_connection(request):
 
     return render(request, 'connection/manage_connection.html', {'form': form})
 
-
 def detail_connection(request, id):
     try:
-        # Essayer de récupérer la connexion avec l'ID spécifié
+        # 🔹 Cas 1 : Essayer de récupérer une connexion ClConnection
         connection = ClConnection.objects.get(id=id)
         return render(request, 'connection/detail_connection.html', {'connection': connection})
+
     except ClConnection.DoesNotExist:
-        # Si la connexion n'existe pas, essayer de récupérer l'utilisateur
         try:
+            # 🔹 Cas 2 : Essayer de récupérer un utilisateur ClUser sans compte
             utilisateur = ClUser.objects.get(id=id)
             messages.error(
                 request,
                 f"L'utilisateur {utilisateur.tnm} {utilisateur.tpm} n'a pas encore de compte."
             )
-            # Appeler la fonction register et lui passer l'ID pour gérer l'enregistrement
             return register(request, id=id)
+
         except ClUser.DoesNotExist:
-            messages.error(request, "Aucun utilisateur correspondant à cet ID.")
-            # Rediriger vers la page d'accueil si aucun utilisateur n'est trouvé
-            return redirect('home')
+            try:
+                # 🔹 Cas 3 : Vérifier s'il s'agit d'un superutilisateur Django
+                super_user = User.objects.get(id=id)
+                if super_user.is_superuser:
+                    messages.info(request, "Détails du superutilisateur Django.")
+                    return render(request, 'connection/superuser_info.html', {'user': super_user})
+                else:
+                    messages.warning(request, "Cet utilisateur Django n'est pas un superutilisateur.")
+                    return redirect('home')
+
+            except User.DoesNotExist:
+                messages.error(request, "Aucun utilisateur correspondant à cet ID.")
+                return redirect('home')

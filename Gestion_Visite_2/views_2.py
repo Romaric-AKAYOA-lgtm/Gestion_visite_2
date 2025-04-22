@@ -56,8 +56,10 @@ def create_graph(annees, valeurs, title, xlabel, ylabel):
 def tatitistique_view(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     visites = ClVisite.objects.all().order_by('-ddvst', 'hvst')
     directeurs_visites = visites.filter(iddirecteur__tstt='Directeur')
@@ -128,7 +130,7 @@ def liste_utilisateurs(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     visiteurs = ClVisiteur.objects.all().order_by('tnm')
     directeurs = ClDirecteur.objects.all().order_by('tnm')
@@ -145,8 +147,10 @@ def liste_utilisateurs(request):
 def generate_word(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     if request.method == "POST":
         visiteurs_ids = request.POST.getlist("visiteurs")

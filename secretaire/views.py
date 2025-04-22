@@ -30,7 +30,7 @@ def secretaire_list(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     secretaire = ClSecretaire.objects.all()
     return render(request, 'secretaire/secretaire_list.html', {  'username':username,'secretaire': secretaire})
@@ -41,7 +41,7 @@ def secretaire_detail(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     secretaire = get_object_or_404(ClSecretaire, id=id)
     return render(request, 'secretaire/secretaire_detail.html', {  'username':username,'secretaire': secretaire})
@@ -49,8 +49,9 @@ def secretaire_detail(request, id):
 def secretaire_create(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     today = timezone.now().date()
     directeur = ClDirecteur.objects.filter(Q(ddf__isnull=True) | Q(ddf__gte=today)).order_by('-ddf')
@@ -75,7 +76,7 @@ def secretaire_update(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     # Récupère la date du jour
     today = timezone.now().date()
@@ -107,7 +108,7 @@ def secretaire_search(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '')
     secretaire = ClSecretaire.objects.filter(tnm__icontains=query)  # Exemple de filtre par nom
@@ -119,7 +120,7 @@ def secreter_search(request):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     query = request.GET.get('q', '').strip()
     secretaires = ClSecretaire.objects.all()
@@ -136,8 +137,10 @@ def secreter_search(request):
 
 def generate_word(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     secretaire_ids = request.POST.getlist('secretaire_select[]')
     if not secretaire_ids:
@@ -226,8 +229,10 @@ def generate_word(request):
 
 def secretaire_impression(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     secretaires = ClSecretaire.objects.all()
     doc = Document()

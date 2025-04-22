@@ -15,8 +15,10 @@ from datetime import datetime
 def mutation_list(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     mutations = CLMutation.objects.select_related('secretaire', 'directeur').all().order_by('-dsb')
     return render(request, 'mutation/mutation_list.html', {'username':username,'mutations': mutations})
 
@@ -24,8 +26,10 @@ def mutation_list(request):
 def mutation_detail(request, id):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     mutation = get_object_or_404(CLMutation, pk=id)
     return render(request, 'mutation/mutation_detail.html', {'username':username,'mutation': mutation})
 
@@ -33,8 +37,10 @@ def mutation_detail(request, id):
 def mutation_create(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     if request.method == 'POST':
         form = CMutationForm(request.POST)
         if form.is_valid():
@@ -57,8 +63,10 @@ def mutation_create(request):
 def mutation_update(request, id):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     mutation = get_object_or_404(CLMutation, pk=id)
     if request.method == 'POST':
         form = CMutationForm(request.POST, instance=mutation)
@@ -73,8 +81,10 @@ def mutation_update(request, id):
 def mutation_search(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     query = request.GET.get('q', '').strip()
     if query:
         mutations = CLMutation.objects.filter(
@@ -95,9 +105,10 @@ def mutation_search(request):
 def mutation_impression(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige si l'utilisateur n'est pas connecté
-    
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     mutations = CLMutation.objects.select_related('secretaire', 'directeur').all()
 
     # Créer un document Word
@@ -158,9 +169,10 @@ def mutation_impression(request):
 def generate_word(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige si l'utilisateur n'est pas connecté
-    
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
     document = Document()
     document.add_heading('Liste des Mutations', 0)
 

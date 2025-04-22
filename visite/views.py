@@ -20,9 +20,10 @@ from django.core.paginator import Paginator
 def visite_list(request):
     username = get_connected_user(request)
 
-    # Redirection si l'utilisateur n'est pas connecté
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     # Récupération des visites et tri
     visites_all = ClVisite.objects.all().order_by('-ddvst', 'hvst')
@@ -44,15 +45,18 @@ def visite_detail(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     visite = get_object_or_404(ClVisite, id=id)  # Récupérer une visite spécifique par ID
     return render(request, 'visite/visite_detail.html', {  'username':username,'visite': visite})
 
 def visite_create(request):
     username = get_connected_user(request)
+
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     visiteur = ClVisiteur.objects.all().order_by('tnm')
 
@@ -85,7 +89,7 @@ def visite_update(request, id):
 
     # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     try:
         visite = get_object_or_404(ClVisite, id=id)  # Récupérer la visite à modifier
@@ -141,9 +145,10 @@ def visite_update(request, id):
 def visite_search(request):
     username = get_connected_user(request)
 
-    # Vérification de la session utilisateur
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     # Récupération des paramètres de recherche
     query = request.GET.get('q', '')
@@ -197,8 +202,10 @@ from .models import ClVisite
 def visite_impression(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
+
 
     today = timezone.now().date()
     mois = today.month
@@ -269,8 +276,9 @@ def visite_impression(request):
 def generate_word(request):
     username = get_connected_user(request)
 
+    # Assurez-vous que le nom d'utilisateur est disponible dans la session
     if not username:
-        return redirect('login')
+        return redirect('connection:login')  # Redirige vers la page de connexion si pas de nom d'utilisateur dans la session
 
     if request.method == 'POST':
         selected_ids = request.POST.getlist('visite_select[]')
