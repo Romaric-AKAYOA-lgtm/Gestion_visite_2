@@ -11,5 +11,9 @@ class CLMutation(models.Model):
     directeur = models.ForeignKey(ClDirecteur, on_delete=models.SET_NULL, null=True, blank=True)
     dsb = models.DateField(default=timezone.now, null=True, blank=True)
     ddf = models.DateField(blank=True, null=True)
+
     def __str__(self):
-        return f"{self.tnm} {self.tpm} - Secrétaire"
+        secretaire_str = f"{self.secretaire.tnm} {self.secretaire.tpm}" if self.secretaire else "Sans secrétaire"
+        directeur_str = f"{self.directeur.tnm} {self.directeur.tpm}" if self.directeur else "Sans directeur"
+        return f"{secretaire_str} → {directeur_str}"
+
