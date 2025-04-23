@@ -2,7 +2,7 @@
 
 {% block contenue %}
 
-<!-- Modal structure for Editing Administration -->
+<!-- Modal structure for Editing or Creating Administration -->
 <div class="modal fade show" id="administrationModal" tabindex="-1" aria-labelledby="administrationModalLabel" aria-hidden="true" style="display: block;">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -13,56 +13,168 @@
             </div>
             <div class="modal-body">
                 {% if form.errors %}
-                <div class="alert alert-danger">
-                    {% for field in form %}
-                        {% if field.errors %}
-                            <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
-                        {% endif %}
-                    {% endfor %}
-                </div>
+                    <div class="alert alert-danger">
+                        {% for field in form %}
+                            {% if field.errors %}
+                                <strong>{{ field.label }}</strong> : {{ field.errors|striptags }}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 {% endif %}
+
                 <form method="POST" enctype="multipart/form-data" action="{% url 'administration:modify' form.instance.pk %}" class="needs-validation" novalidate>
                     {% csrf_token %}
                     
                     <div class="mb-3">
                         <label for="nom" class="form-label">Nom de l'Administration</label>
-                        <input type="text" class="form-control" id="nom" name="nom" value="{{ form.nom.value }}" required>
+                        <input type="text" class="form-control {% if form.nom.errors %}is-invalid{% endif %}" id="nom" name="nom" value="{{ form.nom.value }}" required>
+                        {% if form.nom.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.nom.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
+                    <div class="mb-3">
+                        <label for="structure_superieure" class="form-label">Structure Supérieure</label>
+                        <input type="text" class="form-control {% if form.structure_superieure.errors %}is-invalid{% endif %}" id="structure_superieure" name="structure_superieure" value="{{ form.structure_superieure.value }}">
+                        {% if form.structure_superieure.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.structure_superieure.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="type_structure" class="form-label">Type de Structure</label>
+                        <input type="text" class="form-control {% if form.type_structure.errors %}is-invalid{% endif %}" id="type_structure" name="type_structure" value="{{ form.type_structure.value }}">
+                        {% if form.type_structure.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.type_structure.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="adresse" class="form-label">Adresse</label>
+                        <textarea class="form-control {% if form.adresse.errors %}is-invalid{% endif %}" id="adresse" name="adresse" required>{{ form.adresse.value }}</textarea>
+                        {% if form.adresse.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.adresse.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="ville" class="form-label">Ville</label>
+                        <input type="text" class="form-control {% if form.ville.errors %}is-invalid{% endif %}" id="ville" name="ville" value="{{ form.ville.value }}" required>
+                        {% if form.ville.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.ville.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="boite_postale" class="form-label">Boîte Postale</label>
+                        <input type="text" class="form-control {% if form.boite_postale.errors %}is-invalid{% endif %}" id="boite_postale" name="boite_postale" value="{{ form.boite_postale.value }}">
+                        {% if form.boite_postale.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.boite_postale.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control {% if form.email.errors %}is-invalid{% endif %}" id="email" name="email" value="{{ form.email.value }}" required>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.email.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
                     <div class="mb-3">
                         <label for="localisation" class="form-label">Localisation</label>
-                        <input type="text" class="form-control" id="localisation" name="localisation" value="{{ form.localisation.value }}" required>
+                        <input type="text" class="form-control {% if form.localisation.errors %}is-invalid{% endif %}" id="localisation" name="localisation" value="{{ form.localisation.value }}" required>
+                        {% if form.localisation.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.localisation.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
                     <div class="mb-3">
                         <label for="devise" class="form-label">Devise</label>
-                        <input type="text" class="form-control" id="devise" name="devise" value="{{ form.devise.value }}" required>
+                        <input type="text" class="form-control {% if form.devise.errors %}is-invalid{% endif %}" id="devise" name="devise" value="{{ form.devise.value }}" required>
+                        {% if form.devise.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.devise.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
                     <div class="mb-3">
                         <label for="pays" class="form-label">Pays</label>
-                        <input type="text" class="form-control" id="pays" name="pays" value="{{ form.pays.value }}" required>
+                        <input type="text" class="form-control {% if form.pays.errors %}is-invalid{% endif %}" id="pays" name="pays" value="{{ form.pays.value }}" required>
+                        {% if form.pays.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.pays.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
                     <div class="mb-3">
                         <label for="devise_pays" class="form-label">Devise du Pays</label>
-                        <input type="text" class="form-control" id="devise_pays" name="devise_pays" value="{{ form.devise_pays.value }}" required>
+                        <input type="text" class="form-control {% if form.devise_pays.errors %}is-invalid{% endif %}" id="devise_pays" name="devise_pays" value="{{ form.devise_pays.value }}" required>
+                        {% if form.devise_pays.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.devise_pays.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
+                    <!-- Logo -->
+                    {% if administration.logo %}
+                        <div class="mb-2">
+                            <label class="form-label">Logo actuel :</label><br>
+                            <img src="{{ administration.logo.url }}" alt="Logo actuel" class="img-thumbnail" width="100">
+                        </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label for="logo" class="form-label">Logo</label>
-                        <input type="file" class="form-control" id="logo" name="logo">
+                        <input type="file" class="form-control {% if form.logo.errors %}is-invalid{% endif %}" id="logo" name="logo">
+                        {% if form.logo.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.logo.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
+
+                    <!-- Drapeau -->
+                    {% if administration.drapeau %}
+                        <div class="mb-2">
+                            <label class="form-label">Drapeau actuel :</label><br>
+                            <img src="{{ administration.drapeau.url }}" alt="Drapeau actuel" class="img-thumbnail" width="100">
+                        </div>
+                    {% endif %}
                     <div class="mb-3">
                         <label for="drapeau" class="form-label">Drapeau</label>
-                        <input type="file" class="form-control" id="drapeau" name="drapeau">
+                        <input type="file" class="form-control {% if form.drapeau.errors %}is-invalid{% endif %}" id="drapeau" name="drapeau">
+                        {% if form.drapeau.errors %}
+                            <div class="invalid-feedback">
+                                {{ form.drapeau.errors.0 }}
+                            </div>
+                        {% endif %}
                     </div>
 
                     <div class="text-end">
                         <a href="{% url 'administration:list' %}" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Retour
                         </a>
-                            <button type="submit" class="btn btn-warning px-4 py-2 btn-sm">
-                            {% if administration %}
-                                Modifier
-                            {% else %}
-                                Créer
-                            {% endif %}
+                        <button type="submit" class="btn btn-warning px-4 py-2 btn-sm">
+                            <i class="bi bi-save"></i> {% if administration %}Modifier{% else %}Créer{% endif %}
                         </button>
                     </div>
                 </form>
@@ -71,13 +183,12 @@
     </div>
 </div>
 
-<!-- Script to trigger modal automatically -->
+<!-- Script pour afficher automatiquement le modal -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Show the modal automatically on page load
         var myModal = new bootstrap.Modal(document.getElementById('administrationModal'), {
             keyboard: false,
-            backdrop: 'static' // Disables closing the modal by clicking outside
+            backdrop: 'static'
         });
         myModal.show();
     });

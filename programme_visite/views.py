@@ -345,7 +345,7 @@ def generate_word(request):
 
                 row_cells = table.add_row().cells
                 row_cells[0].text = 'Directeur'
-                row_cells[1].text = f"{programme.secretaire.directeur.tnm} {programme.secretaire.directeur.tpm}"
+                row_cells[1].text = f"{programme.idvst.iddirecteur.tnm} {programme.idvst.iddirecteur.tpm}"
 
                 row_cells = table.add_row().cells
                 row_cells[0].text = 'Secrétaire'

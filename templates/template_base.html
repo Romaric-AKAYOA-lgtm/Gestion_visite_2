@@ -166,5 +166,18 @@
       document.getElementById("main-wrapper").classList.toggle("active");
     }
   </script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const toggleBtn = document.querySelector(".sidebar-toggle");
+      const sidebar = document.querySelector(".sidebar");
+      const mainWrapper = document.querySelector(".main-content-wrapper");
+  
+      toggleBtn.addEventListener("click", function () {
+        sidebar.classList.toggle("show");
+        mainWrapper.classList.toggle("sidebar-visible");
+      });
+    });
+  </script>
+  
 </body>
 </html>

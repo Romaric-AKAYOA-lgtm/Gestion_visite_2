@@ -1,7 +1,6 @@
 {% extends 'template_base.html' %}
 
 {% block contenue %}
-
 <div class="container mt-4">
     <!-- Modal Modifier avec les détails de l'administration -->
     <div class="modal fade show" id="modifierModal" tabindex="-1" aria-labelledby="modifierModalLabel" aria-hidden="true" style="display: block;">
@@ -28,20 +27,40 @@
                                                 <td>{{ administration.nom }}</td>
                                             </tr>
                                             <tr>
-                                                <th><i class="bi bi-geo-alt"></i> Localisation</th>
+                                                <th><i class="bi bi-diagram-3"></i> Structure Supérieure</th>
+                                                <td>{{ administration.structure_superieure }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-ui-checks"></i> Type de structure</th>
+                                                <td>{{ administration.type_structure }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-geo-alt-fill"></i> Ville</th>
+                                                <td>{{ administration.ville }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-house-door"></i> Localisation</th>
                                                 <td>{{ administration.localisation }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-envelope"></i> Email</th>
+                                                <td>{{ administration.email }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-mailbox"></i> Boîte Postale</th>
+                                                <td>{{ administration.boite_postale }}</td>
                                             </tr>
                                             <tr>
                                                 <th><i class="bi bi-currency-exchange"></i> Devise</th>
                                                 <td>{{ administration.devise }}</td>
                                             </tr>
                                             <tr>
-                                                <th><i class="bi bi-globe"></i> Pays</th>
-                                                <td>{{ administration.pays }}</td>
-                                            </tr>
-                                            <tr>
                                                 <th><i class="bi bi-cash-stack"></i> Devise du pays</th>
                                                 <td>{{ administration.devise_pays }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th><i class="bi bi-globe"></i> Pays</th>
+                                                <td>{{ administration.pays }}</td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -91,12 +110,10 @@
         document.addEventListener("DOMContentLoaded", function() {
             var modal = new bootstrap.Modal(document.getElementById('modifierModal'), {
                 keyboard: false,
-                backdrop: 'static' // Désactive la fermeture du modal en cliquant en dehors
+                backdrop: 'static'
             });
             modal.show();
         });
     </script>
-
 </div>
-
 {% endblock %}
